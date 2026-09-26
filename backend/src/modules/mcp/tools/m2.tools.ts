@@ -98,9 +98,9 @@ export async function handleM2Tools(name: string, args: any) {
       where: {
         dueDate: { gte: now, lte: futureDate },
         ...(includeCompleted ? {} : { status: { not: 'DONE' } }),
-        ...(projectId ? { stage: { projectId } } : {}),
+        ...(projectId ? { kanban: { projectId } } : {}),
       },
-      include: { stage: { include: { project: true } } },
+      include: { kanban: { include: { project: true } } },
       orderBy: { dueDate: 'asc' },
     });
 
@@ -120,9 +120,9 @@ export async function handleM2Tools(name: string, args: any) {
         title: t.title,
         dueDate: t.dueDate?.toISOString(),
         status: t.status,
-        project: t.stage.project.title,
-        projectType: t.stage.project.type,
-        stage: t.stage.title,
+        project: t.kanban.project.title,
+        projectType: t.kanban.project.type,
+        kanban: t.kanban.title,
       })),
       appointments: appointments.map((a) => ({
         id: a.id,

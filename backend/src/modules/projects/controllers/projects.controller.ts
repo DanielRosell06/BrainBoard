@@ -1,6 +1,7 @@
 import type { Request, Response } from 'express';
 import { projectService, VALID_PROJECT_STATUSES, VALID_PROJECT_TYPES } from '../services/project.service.js';
-import { stageService, VALID_STAGE_STATUSES } from '../services/stage.service.js';
+import { kanbanService } from '../services/kanban.service.js';
+import { noteService } from '../services/note.service.js';
 import { updateLogService } from '../services/update-log.service.js';
 import { memberService } from '../services/member.service.js';
 import { taskService, VALID_STATUSES } from '../services/task.service.js';
@@ -189,14 +190,14 @@ export const deleteProject = async (req: Request, res: Response) => {
 };
 
 // ==========================================
-// STAGES CONTROLLER
+// KANBANS CONTROLLER
 // ==========================================
 
-export const listStagesByProject = async (req: Request, res: Response) => {
+export const listKanbansByProject = async (req: Request, res: Response) => {
   try {
     const projectId = String(req.params.projectId);
-    const stages = await stageService.listStagesByProject(projectId);
-    res.json(stages);
+    const kanbans = await kanbanService.listKanbansByProject(projectId);
+    res.json(kanbans);
   } catch (error: any) {
     if (error instanceof ValidationError) {
       return res.status(400).json({ error: error.message });
@@ -208,27 +209,20 @@ export const listStagesByProject = async (req: Request, res: Response) => {
   }
 };
 
-export const createStage = async (req: Request, res: Response) => {
+export const createKanban = async (req: Request, res: Response) => {
   try {
     const projectId = String(req.params.projectId);
-    const { title, order, status } = req.body;
+    const { title } = req.body;
 
     if (!title || typeof title !== 'string' || !title.trim()) {
       return res.status(400).json({ error: 'Title is required' });
     }
-    if (status !== undefined && !VALID_STAGE_STATUSES.includes(status)) {
-      return res.status(400).json({
-        error: `Invalid stage status: ${status}. Must be one of: ${VALID_STAGE_STATUSES.join(', ')}`,
-      });
-    }
 
-    const stage = await stageService.createStage({
+    const kanban = await kanbanService.createKanban({
       projectId,
       title,
-      order: typeof order === 'number' ? order : undefined,
-      status,
     });
-    res.status(201).json(stage);
+    res.status(201).json(kanban);
   } catch (error: any) {
     if (error instanceof ValidationError) {
       return res.status(400).json({ error: error.message });
@@ -240,14 +234,14 @@ export const createStage = async (req: Request, res: Response) => {
   }
 };
 
-export const getStageById = async (req: Request, res: Response) => {
+export const getKanbanById = async (req: Request, res: Response) => {
   try {
     const id = String(req.params.id);
-    const stage = await stageService.getStageById(id);
-    if (!stage) {
-      return res.status(404).json({ error: 'Stage not found' });
+    const kanban = await kanbanService.getKanbanById(id);
+    if (!kanban) {
+      return res.status(404).json({ error: 'Kanban not found' });
     }
-    res.json(stage);
+    res.json(kanban);
   } catch (error: any) {
     if (error instanceof ValidationError) {
       return res.status(400).json({ error: error.message });
@@ -256,45 +250,112 @@ export const getStageById = async (req: Request, res: Response) => {
   }
 };
 
-export const updateStage = async (req: Request, res: Response) => {
+export const updateKanban = async (req: Request, res: Response) => {
   try {
     const id = String(req.params.id);
-    const { title, order, status } = req.body;
+    const { title } = req.body;
 
-    if (status !== undefined && !VALID_STAGE_STATUSES.includes(status)) {
-      return res.status(400).json({
-        error: `Invalid stage status: ${status}. Must be one of: ${VALID_STAGE_STATUSES.join(', ')}`,
-      });
-    }
     if (title !== undefined && (typeof title !== 'string' || !title.trim())) {
       return res.status(400).json({ error: 'Title cannot be empty' });
     }
 
-    const stage = await stageService.updateStage(id, {
+    const kanban = await kanbanService.updateKanban(id, {
       title,
-      order,
-      status,
     });
-    res.json(stage);
+    res.json(kanban);
   } catch (error: any) {
     if (error instanceof ValidationError) {
       return res.status(400).json({ error: error.message });
     }
     if (error instanceof NotFoundError || (error && typeof error === 'object' && 'code' in error && error.code === 'P2025')) {
-      return res.status(404).json({ error: 'Stage not found' });
+      return res.status(404).json({ error: 'Kanban not found' });
     }
     res.status(500).json({ error: error.message });
   }
 };
 
-export const deleteStage = async (req: Request, res: Response) => {
+export const deleteKanban = async (req: Request, res: Response) => {
   try {
     const id = String(req.params.id);
-    await stageService.deleteStage(id);
+    await kanbanService.deleteKanban(id);
     res.status(204).send();
   } catch (error: any) {
     if (error instanceof NotFoundError || (error && typeof error === 'object' && 'code' in error && error.code === 'P2025')) {
-      return res.status(404).json({ error: 'Stage not found' });
+      return res.status(404).json({ error: 'Kanban not found' });
+    }
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// ==========================================
+// NOTES CONTROLLER
+// ==========================================
+
+export const listNotesByProject = async (req: Request, res: Response) => {
+  try {
+    const projectId = String(req.params.projectId);
+    const notes = await noteService.listNotesByProject(projectId);
+    res.json(notes);
+  } catch (error: any) {
+    if (error instanceof ValidationError) {
+      return res.status(400).json({ error: error.message });
+    }
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const createNote = async (req: Request, res: Response) => {
+  try {
+    const projectId = String(req.params.projectId);
+    const { title, content } = req.body;
+    const note = await noteService.createNote(projectId, title, content);
+    res.status(201).json(note);
+  } catch (error: any) {
+    if (error instanceof ValidationError) {
+      return res.status(400).json({ error: error.message });
+    }
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const getNoteById = async (req: Request, res: Response) => {
+  try {
+    const id = String(req.params.id);
+    const note = await noteService.getNoteById(id);
+    if (!note) {
+      return res.status(404).json({ error: 'Note not found' });
+    }
+    res.json(note);
+  } catch (error: any) {
+    if (error instanceof ValidationError) {
+      return res.status(400).json({ error: error.message });
+    }
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const updateNote = async (req: Request, res: Response) => {
+  try {
+    const id = String(req.params.id);
+    const { title, content } = req.body;
+    const note = await noteService.updateNote(id, { title, content });
+    res.json(note);
+  } catch (error: any) {
+    if (error instanceof ValidationError) {
+      return res.status(400).json({ error: error.message });
+    }
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const deleteNote = async (req: Request, res: Response) => {
+  try {
+    const id = String(req.params.id);
+    await noteService.deleteNote(id);
+    res.status(204).send();
+  } catch (error: any) {
+    if (error instanceof NotFoundError || (error && typeof error === 'object' && 'code' in error && error.code === 'P2025')) {
+      return res.status(404).json({ error: 'Note not found' });
     }
     res.status(500).json({ error: error.message });
   }
@@ -489,7 +550,7 @@ export const deleteMember = async (req: Request, res: Response) => {
 export const listTasks = async (req: Request, res: Response) => {
   try {
     const { status, isSprintActive, hasDueDate, projectId } = req.query;
-    const stageId = req.query.stageId ? String(req.query.stageId).trim() : undefined;
+    const kanbanId = req.query.kanbanId ? String(req.query.kanbanId).trim() : undefined;
     const projId = projectId ? String(projectId).trim() : undefined;
     const statusStr = status ? String(status) : undefined;
 
@@ -500,7 +561,7 @@ export const listTasks = async (req: Request, res: Response) => {
     }
 
     const tasks = await taskService.listTasks({
-      stageId,
+      kanbanId,
       projectId: projId,
       status: statusStr,
       isSprintActive: isSprintActive !== undefined ? isSprintActive === 'true' : undefined,
@@ -515,10 +576,10 @@ export const listTasks = async (req: Request, res: Response) => {
   }
 };
 
-export const listTasksByStage = async (req: Request, res: Response) => {
+export const listTasksByKanban = async (req: Request, res: Response) => {
   try {
-    const stageId = String(req.params.stageId);
-    const tasks = await taskService.listTasks({ stageId });
+    const kanbanId = String(req.params.kanbanId);
+    const tasks = await taskService.listTasks({ kanbanId });
     res.json(tasks);
   } catch (error: any) {
     if (error instanceof ValidationError) {
@@ -546,13 +607,13 @@ export const getTaskById = async (req: Request, res: Response) => {
 
 export const createTask = async (req: Request, res: Response) => {
   try {
-    const stageIdFromParams = req.params?.stageId;
-    const { title, stageId: stageIdFromBody, description, status, dueDate, isSprintActive } = req.body;
-    const rawStageId = stageIdFromParams || stageIdFromBody;
-    const stageId = rawStageId ? String(rawStageId).trim() : '';
+    const kanbanIdFromParams = req.params?.kanbanId;
+    const { title, kanbanId: kanbanIdFromBody, description, status, dueDate, isSprintActive } = req.body;
+    const rawKanbanId = kanbanIdFromParams || kanbanIdFromBody;
+    const kanbanId = rawKanbanId ? String(rawKanbanId).trim() : '';
 
-    if (!stageId) {
-      return res.status(400).json({ error: 'stageId is required' });
+    if (!kanbanId) {
+      return res.status(400).json({ error: 'kanbanId is required' });
     }
     if (!title || typeof title !== 'string' || !title.trim()) {
       return res.status(400).json({ error: 'Title is required' });
@@ -564,7 +625,7 @@ export const createTask = async (req: Request, res: Response) => {
     }
 
     const task = await taskService.createTask({
-      stageId,
+      kanbanId,
       title: title.trim(),
       description: description ? String(description).trim() : null,
       status,
@@ -577,7 +638,7 @@ export const createTask = async (req: Request, res: Response) => {
       return res.status(400).json({ error: error.message });
     }
     if (error instanceof NotFoundError || (error && typeof error === 'object' && 'code' in error && (error.code === 'P2003' || error.code === 'P2025'))) {
-      return res.status(404).json({ error: 'Stage not found' });
+      return res.status(404).json({ error: 'Kanban not found' });
     }
     res.status(500).json({ error: error.message });
   }
@@ -586,7 +647,7 @@ export const createTask = async (req: Request, res: Response) => {
 export const updateTask = async (req: Request, res: Response) => {
   try {
     const id = String(req.params.id);
-    const { status, title, description, stageId, dueDate, isSprintActive } = req.body;
+    const { status, title, description, kanbanId, dueDate, isSprintActive } = req.body;
 
     if (status !== undefined && !VALID_STATUSES.includes(status)) {
       return res.status(400).json({ error: 'Invalid status' });
@@ -599,7 +660,7 @@ export const updateTask = async (req: Request, res: Response) => {
       status,
       title,
       description,
-      stageId,
+      kanbanId,
       dueDate,
       isSprintActive,
     });

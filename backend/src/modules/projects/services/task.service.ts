@@ -15,12 +15,12 @@ export class TaskService {
   async listTasks(filters?: TaskFilterOptions): Promise<TaskWithSubtasks[]> {
     const where: any = {};
 
-    if (filters?.stageId) {
-      where.stageId = filters.stageId;
+    if (filters?.kanbanId) {
+      where.kanbanId = filters.kanbanId;
     }
 
     if (filters?.projectId) {
-      where.stage = { projectId: filters.projectId };
+      where.kanban = { projectId: filters.projectId };
     }
 
     if (filters?.status) {
@@ -42,7 +42,7 @@ export class TaskService {
 
     return await prisma.task.findMany({
       where,
-      include: { subtasks: true, stage: true },
+      include: { subtasks: true, kanban: true },
       orderBy: { createdAt: 'desc' },
     });
   }
@@ -54,25 +54,25 @@ export class TaskService {
 
     return await prisma.task.findUnique({
       where: { id },
-      include: { subtasks: true, stage: true },
+      include: { subtasks: true, kanban: true },
     });
   }
 
   async createTask(data: CreateTaskInput): Promise<TaskWithSubtasks> {
-    if (!data.stageId || typeof data.stageId !== 'string') {
-      throw new ValidationError('Stage ID is required');
+    if (!data.kanbanId || typeof data.kanbanId !== 'string') {
+      throw new ValidationError('Kanban ID is required');
     }
 
     if (!data.title || typeof data.title !== 'string' || !data.title.trim()) {
       throw new ValidationError('Title is required');
     }
 
-    const stage = await prisma.stage.findUnique({
-      where: { id: data.stageId },
+    const kanban = await prisma.kanban.findUnique({
+      where: { id: data.kanbanId },
       select: { id: true },
     });
-    if (!stage) {
-      throw new NotFoundError('Stage not found');
+    if (!kanban) {
+      throw new NotFoundError('Kanban not found');
     }
 
     let status: Status = 'TODO';
@@ -98,7 +98,7 @@ export class TaskService {
 
     return await prisma.task.create({
       data: {
-        stageId: data.stageId,
+        kanbanId: data.kanbanId,
         title: data.title.trim(),
         description:
           data.description !== undefined && data.description !== null
@@ -108,7 +108,7 @@ export class TaskService {
         dueDate,
         isSprintActive,
       },
-      include: { subtasks: true, stage: true },
+      include: { subtasks: true, kanban: true },
     });
   }
 
@@ -121,7 +121,7 @@ export class TaskService {
       status?: Status;
       title?: string;
       description?: string | null;
-      stageId?: string;
+      kanbanId?: string;
       dueDate?: Date | null;
       isSprintActive?: boolean;
     } = {};
@@ -142,18 +142,18 @@ export class TaskService {
       updateData.title = data.title.trim();
     }
 
-    if (data.stageId !== undefined) {
-      if (typeof data.stageId !== 'string' || !data.stageId.trim()) {
-        throw new ValidationError('Stage ID cannot be empty');
+    if (data.kanbanId !== undefined) {
+      if (typeof data.kanbanId !== 'string' || !data.kanbanId.trim()) {
+        throw new ValidationError('Kanban ID cannot be empty');
       }
-      const stage = await prisma.stage.findUnique({
-        where: { id: data.stageId },
+      const kanban = await prisma.kanban.findUnique({
+        where: { id: data.kanbanId },
         select: { id: true },
       });
-      if (!stage) {
-        throw new NotFoundError('Stage not found');
+      if (!kanban) {
+        throw new NotFoundError('Kanban not found');
       }
-      updateData.stageId = data.stageId;
+      updateData.kanbanId = data.kanbanId;
     }
 
     if (data.description !== undefined) {
@@ -181,7 +181,7 @@ export class TaskService {
       return await prisma.task.update({
         where: { id },
         data: updateData,
-        include: { subtasks: true, stage: true },
+        include: { subtasks: true, kanban: true },
       });
     } catch (error: any) {
       if (error && typeof error === 'object' && 'code' in error && error.code === 'P2025') {

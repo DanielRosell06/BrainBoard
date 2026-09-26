@@ -3,7 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import { prisma } from './prisma.js';
 import { projectService, VALID_PROJECT_STATUSES, VALID_PROJECT_TYPES } from './services/project.service.js';
-import { stageService, VALID_STAGE_STATUSES } from './services/stage.service.js';
+// (removed)
 import { updateLogService } from './services/update-log.service.js';
 import { memberService } from './services/member.service.js';
 import { taskService, VALID_STATUSES } from './services/task.service.js';
@@ -22,6 +22,7 @@ import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
 import { projectsRouter } from './modules/projects/projects.router.js';
 import { academicRouter } from './modules/academic/academic.router.js';
 import { calendarRouter } from './modules/calendar/calendar.router.js';
+import { chatRouter } from './modules/chat/chat.router.js';
 import { serveDocumentation } from './modules/shared/docs.js';
 import { ValidationError, NotFoundError } from './modules/shared/errors.js';
 
@@ -29,7 +30,6 @@ import { ValidationError, NotFoundError } from './modules/shared/errors.js';
 export {
   prisma,
   projectService,
-  stageService,
   updateLogService,
   memberService,
   taskService,
@@ -65,6 +65,7 @@ app.get('/api/health', (req, res) => {
 app.use(projectsRouter);
 app.use('/api/academic', academicRouter);
 app.use(calendarRouter);
+app.use(chatRouter);
 
 // MCP Transports
 app.get('/mcp/sse', async (req, res) => {

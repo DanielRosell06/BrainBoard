@@ -1,6 +1,24 @@
-version: '3.8'
-
 services:
+  db:
+    image: postgres:16-alpine
+    container_name: focustask_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: brainboard
+      POSTGRES_PASSWORD: brainboard
+      POSTGRES_DB: brainboard
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U brainboard -d brainboard"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - focustask_network
+
   backend:
     build:
       context: ./backend
@@ -9,9 +27,14 @@ services:
     restart: unless-stopped
     ports:
       - "3000:3000"
+    env_file:
+      - ./backend/.env
     environment:
       - PORT=3000
-      - DATABASE_URL=${DATABASE_URL:-postgresql://neondb_owner:npg_6YesJQpTMRk4@ep-holy-mode-acy9p31p-pooler.sa-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require}
+      - DATABASE_URL=postgresql://brainboard:brainboard@db:5432/brainboard
+    depends_on:
+      db:
+        condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:3000/api/health || exit 1"]
       interval: 10s
@@ -38,3 +61,6 @@ services:
 networks:
   focustask_network:
     driver: bridge
+
+volumes:
+  postgres_data:

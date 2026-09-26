@@ -30,11 +30,11 @@ export const ProjectList: React.FC<ProjectListProps> = ({
   return (
     <div className="space-y-6">
       {/* Portfolio Header Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200/80">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200">
         <div>
           <h2 className="text-xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
             <span>Seus Projetos</span>
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-50 text-indigo-700 border border-indigo-100">
+            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-900 border border-slate-200">
               {projects.length}
             </span>
           </h2>
@@ -46,7 +46,7 @@ export const ProjectList: React.FC<ProjectListProps> = ({
         <button
           type="button"
           onClick={onOpenCreateProjectModal}
-          className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-md shadow-indigo-500/20 transition-all self-start sm:self-auto"
+          className="flex items-center gap-2 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl shadow-sm transition-all self-start sm:self-auto"
         >
           <Plus className="w-4 h-4 stroke-[2.5]" />
           <span>+ Novo Projeto</span>
@@ -55,8 +55,8 @@ export const ProjectList: React.FC<ProjectListProps> = ({
 
       {/* Projects Grid or Empty State */}
       {filteredProjects.length === 0 ? (
-        <div className="text-center py-20 px-4 bg-white rounded-3xl border border-slate-200/80 shadow-card">
-          <div className="w-16 h-16 rounded-2xl bg-indigo-50 border border-indigo-100 text-indigo-600 flex items-center justify-center mx-auto mb-4">
+        <div className="text-center py-20 px-4 bg-white rounded-xl border border-slate-200 shadow-sm">
+          <div className="w-16 h-16 rounded-lg bg-slate-100 border border-slate-200 text-slate-900 flex items-center justify-center mx-auto mb-4">
             <FolderKanban className="w-8 h-8" />
           </div>
           <h3 className="text-lg font-bold text-slate-800">
@@ -70,7 +70,7 @@ export const ProjectList: React.FC<ProjectListProps> = ({
           <button
             type="button"
             onClick={onOpenCreateProjectModal}
-            className="mt-6 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-xl shadow-md shadow-indigo-500/20 transition-all inline-flex items-center gap-2"
+            className="mt-6 px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-xl shadow-sm transition-all inline-flex items-center gap-2"
           >
             <Sparkles className="w-4 h-4" />
             <span>Criar Primeiro Projeto</span>

@@ -19,11 +19,15 @@ COPY tsconfig.json ./
 COPY src ./src
 COPY MCP_DOCUMENTATION.md* ./
 
+# Copy entrypoint script
+COPY entrypoint.sh ./
+RUN chmod +x entrypoint.sh
+
 # Expose backend port
 EXPOSE 3000
 
 ENV PORT=3000
 ENV NODE_ENV=production
 
-# Start application using tsx
-CMD ["npx", "tsx", "src/index.ts"]
+# Use entrypoint to run prisma db push before starting the app
+CMD ["./entrypoint.sh"]

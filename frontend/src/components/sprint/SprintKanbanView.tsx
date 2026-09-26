@@ -170,8 +170,7 @@ export const SprintKanbanView: React.FC<SprintKanbanViewProps> = ({ onOpenCreate
     return tasks.filter(
       (t) =>
         t.title.toLowerCase().includes(q) ||
-        (t.description && t.description.toLowerCase().includes(q)) ||
-        (t.stage?.title && t.stage.title.toLowerCase().includes(q))
+        (t.kanban?.title && t.kanban.title.toLowerCase().includes(q))
     );
   }, [tasks, searchQuery]);
 
@@ -187,9 +186,9 @@ export const SprintKanbanView: React.FC<SprintKanbanViewProps> = ({ onOpenCreate
     {
       status: 'IN_PROGRESS',
       label: 'Em Andamento',
-      icon: <PlayCircle className="w-4 h-4 text-indigo-500" />,
-      color: 'border-indigo-400',
-      bg: 'bg-indigo-50/50',
+      icon: <PlayCircle className="w-4 h-4 text-slate-800" />,
+      color: 'border-slate-400',
+      bg: 'bg-slate-100/50',
     },
     {
       status: 'DONE',
@@ -233,11 +232,11 @@ export const SprintKanbanView: React.FC<SprintKanbanViewProps> = ({ onOpenCreate
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
       {/* Top Banner & KPI Section */}
-      <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-card">
+      <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-1">
             <div className="flex items-center gap-2.5">
-              <div className="w-10 h-10 rounded-2xl bg-amber-500 text-white flex items-center justify-center shadow-md shadow-amber-500/20">
+              <div className="w-10 h-10 rounded-lg bg-amber-500 text-white flex items-center justify-center shadow-md shadow-amber-500/20">
                 <Flame className="w-5 h-5" />
               </div>
               <div>
@@ -277,7 +276,7 @@ export const SprintKanbanView: React.FC<SprintKanbanViewProps> = ({ onOpenCreate
             {onOpenCreateTask && (
               <button
                 onClick={onOpenCreateTask}
-                className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-md shadow-indigo-500/20 transition-all active:scale-98"
+                className="flex items-center gap-2 px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl shadow-sm transition-all active:scale-98"
               >
                 <Plus className="w-4 h-4 stroke-[2.5]" />
                 <span>Nova Tarefa</span>
@@ -287,20 +286,20 @@ export const SprintKanbanView: React.FC<SprintKanbanViewProps> = ({ onOpenCreate
         </div>
 
         {/* Sprint KPIs Bar */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6 pt-6 border-t border-slate-100">
-          <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/60">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6 pt-6 border-t border-slate-200">
+          <div className="p-3.5 rounded-lg bg-slate-50 border border-slate-200/60">
             <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Total na Sprint</p>
             <p className="text-2xl font-black text-slate-900 mt-0.5">{totalCount}</p>
           </div>
-          <div className="p-3.5 rounded-2xl bg-amber-50/60 border border-amber-100">
+          <div className="p-3.5 rounded-lg bg-amber-50/60 border border-amber-100">
             <p className="text-[11px] font-bold uppercase tracking-wider text-amber-600">A Fazer</p>
             <p className="text-2xl font-black text-amber-700 mt-0.5">{todoCount}</p>
           </div>
-          <div className="p-3.5 rounded-2xl bg-indigo-50/60 border border-indigo-100">
-            <p className="text-[11px] font-bold uppercase tracking-wider text-indigo-600">Em Andamento</p>
-            <p className="text-2xl font-black text-indigo-700 mt-0.5">{inProgressCount}</p>
+          <div className="p-3.5 rounded-lg bg-slate-100/60 border border-slate-200">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-slate-900">Em Andamento</p>
+            <p className="text-2xl font-black text-slate-900 mt-0.5">{inProgressCount}</p>
           </div>
-          <div className="p-3.5 rounded-2xl bg-emerald-50/60 border border-emerald-100">
+          <div className="p-3.5 rounded-lg bg-emerald-50/60 border border-emerald-100">
             <div className="flex items-center justify-between">
               <p className="text-[11px] font-bold uppercase tracking-wider text-emerald-600">Taxa de Conclusão</p>
               <span className="text-xs font-black text-emerald-700">{completionRate}%</span>
@@ -336,7 +335,7 @@ export const SprintKanbanView: React.FC<SprintKanbanViewProps> = ({ onOpenCreate
 
       {/* Error state */}
       {error && (
-        <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center justify-between">
+        <div className="p-4 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center justify-between">
           <div className="flex items-center gap-2">
             <AlertCircle className="w-4 h-4 shrink-0" />
             <span>{error}</span>
@@ -357,8 +356,8 @@ export const SprintKanbanView: React.FC<SprintKanbanViewProps> = ({ onOpenCreate
           <p className="text-xs text-slate-500 font-medium">Carregando quadro da sprint...</p>
         </div>
       ) : totalCount === 0 ? (
-        <div className="bg-white rounded-3xl p-12 text-center border border-dashed border-slate-300 space-y-4">
-          <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center mx-auto shadow-xs">
+        <div className="bg-white rounded-xl p-12 text-center border border-dashed border-slate-300 space-y-4">
+          <div className="w-12 h-12 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center mx-auto shadow-xs">
             <Flame className="w-6 h-6" />
           </div>
           <div className="space-y-1">
@@ -383,7 +382,7 @@ export const SprintKanbanView: React.FC<SprintKanbanViewProps> = ({ onOpenCreate
             return (
               <div
                 key={col.status}
-                className="bg-slate-50/80 rounded-3xl p-4 border border-slate-200/80 flex flex-col min-h-[500px]"
+                className="bg-slate-50/80 rounded-xl p-4 border border-slate-200 flex flex-col min-h-[500px]"
               >
                 {/* Column Header */}
                 <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-200/60">
@@ -413,15 +412,15 @@ export const SprintKanbanView: React.FC<SprintKanbanViewProps> = ({ onOpenCreate
                       return (
                         <div
                           key={task.id}
-                          className="group bg-white rounded-2xl p-4 border border-slate-200/80 shadow-card hover:shadow-card-hover hover:border-amber-300 transition-all space-y-3"
+                          className="group bg-white rounded-lg p-4 border border-slate-200 shadow-sm hover:shadow-md hover:border-amber-300 transition-all space-y-3"
                         >
                           {/* Card Header: Stage badge + Due Date & Remove button */}
                           <div className="flex items-start justify-between gap-2">
                             <div className="flex flex-wrap items-center gap-1.5">
-                              {task.stage?.title && (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100">
+                              {task.kanban?.title && (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold bg-slate-100 text-slate-900 border border-slate-200">
                                   <Layers className="w-3 h-3" />
-                                  <span className="truncate max-w-[120px]">{task.stage.title}</span>
+                                  <span className="truncate max-w-[120px]">{task.kanban.title}</span>
                                 </span>
                               )}
                               {renderDueDateBadge(task.dueDate)}
@@ -461,7 +460,7 @@ export const SprintKanbanView: React.FC<SprintKanbanViewProps> = ({ onOpenCreate
                           </div>
 
                           {/* Subtasks Progress */}
-                          <div className="space-y-1.5 pt-2 border-t border-slate-100">
+                          <div className="space-y-1.5 pt-2 border-t border-slate-200">
                             <div className="flex items-center justify-between text-xs">
                               <span className="flex items-center gap-1 text-slate-500 font-medium">
                                 <CheckSquare className="w-3 h-3 text-slate-400" />
@@ -556,7 +555,7 @@ export const SprintKanbanView: React.FC<SprintKanbanViewProps> = ({ onOpenCreate
                           </div>
 
                           {/* Status Transition Action Buttons */}
-                          <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-1.5">
+                          <div className="pt-2 border-t border-slate-200 flex items-center justify-between gap-1.5">
                             {task.status === 'TODO' && (
                               <button
                                 type="button"

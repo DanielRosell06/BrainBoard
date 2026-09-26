@@ -32,7 +32,7 @@ export class CalendarService {
     }
 
     if (filters?.projectId) {
-      taskWhere.stage = { projectId: filters.projectId };
+      taskWhere.kanban = { projectId: filters.projectId };
     }
 
     if (filters?.subjectId) {
@@ -47,7 +47,7 @@ export class CalendarService {
       prisma.task.findMany({
         where: taskWhere,
         include: {
-          stage: {
+          kanban: {
             include: {
               project: true,
             },
@@ -87,15 +87,15 @@ export class CalendarService {
         id: `task-${t.id}`,
         sourceId: t.id,
         sourceType: 'TASK_DEADLINE',
-        title: `[${t.stage.project.title}] ${t.title}`,
+        title: `[${t.kanban.project.title}] ${t.title}`,
         description: t.description,
         start: dueDateIso,
         end: dueDateIso,
         isCompleted: isDone,
         color,
-        projectTitle: t.stage.project.title,
-        stageTitle: t.stage.title,
-        projectType: t.stage.project.type,
+        projectTitle: t.kanban.project.title,
+        kanbanTitle: t.kanban.title,
+        projectType: t.kanban.project.type,
         status: t.status,
       };
     });

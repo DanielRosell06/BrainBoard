@@ -107,13 +107,13 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/35 backdrop-blur-xs animate-in fade-in duration-200">
       <div
-        className="relative w-full max-w-lg bg-white border border-slate-100 rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200"
+        className="relative w-full max-w-lg bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden animate-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4.5 border-b border-slate-100 bg-white">
+        <div className="flex items-center justify-between px-6 py-4.5 border-b border-slate-200 bg-white">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-xl bg-slate-100 text-slate-900 flex items-center justify-center">
               <FolderKanban className="w-4 h-4" />
             </div>
             <div>
@@ -155,7 +155,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Ex: Plataforma E-commerce V2..."
               autoFocus
-              className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none transition-all"
+              className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:bg-white focus:border-slate-800 focus:ring-2 focus:ring-slate-200 focus:outline-none transition-all"
             />
           </div>
 
@@ -180,10 +180,10 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
                       className="sr-only"
                     />
                     <div
-                      className={`flex flex-col items-center justify-center gap-1.5 p-3 rounded-2xl border text-xs font-semibold transition-all ${
+                      className={`flex flex-col items-center justify-center gap-1.5 p-3 rounded-lg border text-xs font-semibold transition-all ${
                         isChecked
                           ? `${opt.activeBorder} ${opt.activeBg} ${opt.textColor} shadow-xs`
-                          : 'border-slate-200/80 bg-slate-50/70 text-slate-600 hover:bg-slate-100 hover:border-slate-300'
+                          : 'border-slate-200 bg-slate-50/70 text-slate-600 hover:bg-slate-100 hover:border-slate-300'
                       }`}
                     >
                       {opt.icon}
@@ -207,7 +207,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Objetivos e escopo do projeto..."
-              className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none transition-all resize-none"
+              className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:bg-white focus:border-slate-800 focus:ring-2 focus:ring-slate-200 focus:outline-none transition-all resize-none"
             />
           </div>
 
@@ -224,7 +224,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
               value={githubRepo}
               onChange={(e) => setGithubRepo(e.target.value)}
               placeholder="https://github.com/usuario/repositorio"
-              className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none transition-all"
+              className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:bg-white focus:border-slate-800 focus:ring-2 focus:ring-slate-200 focus:outline-none transition-all"
             />
           </div>
 
@@ -241,12 +241,12 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
               value={businessLogic}
               onChange={(e) => setBusinessLogic(e.target.value)}
               placeholder="Regras de negócio, arquitetura técnica e diretrizes de IA..."
-              className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none transition-all resize-none font-mono text-xs"
+              className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:bg-white focus:border-slate-800 focus:ring-2 focus:ring-slate-200 focus:outline-none transition-all resize-none font-mono text-xs"
             />
           </div>
 
           {/* Footer Actions */}
-          <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+          <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-200">
             <button
               type="button"
               onClick={onClose}
@@ -257,7 +257,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
             <button
               type="submit"
               disabled={isSubmitting || !title.trim()}
-              className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-bold rounded-xl shadow-md shadow-indigo-500/20 transition-all flex items-center gap-2"
+              className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white text-xs font-bold rounded-xl shadow-sm transition-all flex items-center gap-2"
             >
               {isSubmitting ? (
                 <>

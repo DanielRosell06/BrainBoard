@@ -1,6 +1,7 @@
 import { projectService } from '../../projects/services/project.service.js';
 import { updateLogService } from '../../projects/services/update-log.service.js';
-import { stageService } from '../../projects/services/stage.service.js';
+import { kanbanService } from '../../projects/services/kanban.service.js';
+import { noteService } from '../../projects/services/note.service.js';
 import type { Tool } from '@modelcontextprotocol/sdk/types.js';
 
 export const projectToolSchemas: Tool[] = [
@@ -26,13 +27,26 @@ export const projectToolSchemas: Tool[] = [
     },
   },
   {
-    name: 'create_stage',
-    description: 'Cria uma nova etapa (stage/coluna) dentro de um projeto.',
+    name: 'create_kanban',
+    description: 'Cria um novo quadro Kanban dentro de um projeto.',
     inputSchema: {
       type: 'object',
       properties: {
         projectId: { type: 'string', description: 'ID do projeto.' },
-        title: { type: 'string', description: 'Título da etapa (ex: Backlog, Design, Frontend).' },
+        title: { type: 'string', description: 'Título do quadro Kanban (ex: Backlog, Design, Frontend).' },
+      },
+      required: ['projectId', 'title'],
+    },
+  },
+  {
+    name: 'create_note',
+    description: 'Cria um novo bloco de notas dentro de um projeto.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        projectId: { type: 'string', description: 'ID do projeto.' },
+        title: { type: 'string', description: 'Título da nota.' },
+        content: { type: 'string', description: 'Conteúdo em Markdown da nota.' },
       },
       required: ['projectId', 'title'],
     },
@@ -40,7 +54,7 @@ export const projectToolSchemas: Tool[] = [
   {
     name: 'read_project_context',
     description:
-      'Lê o contexto completo do projeto para a IA: metadados, businessLogic, githubRepo, settings, etapas com tarefas e subtarefas, logs de atualização e membros.',
+      'Lê o contexto completo do projeto para a IA: metadados, businessLogic, githubRepo, settings, kanbans, notes com tarefas e subtarefas, logs de atualização e membros.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -154,18 +168,34 @@ export async function handleProjectTools(name: string, args: any) {
     };
   }
 
-  if (name === 'create_stage') {
+  if (name === 'create_kanban') {
     const projectId = String(args?.projectId ?? '').trim();
     const title = String(args?.title ?? '').trim();
     if (!projectId || !title) throw new Error('projectId e title são obrigatórios');
 
-    const stage = await stageService.createStage({
+    const kanban = await kanbanService.createKanban({
       projectId,
       title,
     });
 
     return {
-      content: [{ type: 'text' as const, text: JSON.stringify({ success: true, message: `Etapa '${stage.title}' criada com sucesso.`, id: stage.id, stage }, null, 2) }],
+      content: [{ type: 'text' as const, text: JSON.stringify({ success: true, message: `Kanban '${kanban.title}' criado com sucesso.`, id: kanban.id, kanban }, null, 2) }],
+    };
+  }
+
+  if (name === 'create_note') {
+    const projectId = String(args?.projectId ?? '').trim();
+    const title = String(args?.title ?? '').trim();
+    if (!projectId || !title) throw new Error('projectId e title são obrigatórios');
+
+    const note = await noteService.createNote(
+      projectId,
+      title,
+      args?.content ? String(args.content) : ''
+    );
+
+    return {
+      content: [{ type: 'text' as const, text: JSON.stringify({ success: true, message: `Nota '${note.title}' criada com sucesso.`, id: note.id, note }, null, 2) }],
     };
   }
 

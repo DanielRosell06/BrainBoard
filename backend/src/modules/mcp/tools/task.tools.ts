@@ -9,13 +9,13 @@ export const taskToolSchemas: Tool[] = [
     inputSchema: {
       type: 'object',
       properties: {
-        stageId: { type: 'string', description: 'ID da etapa (stage) à qual a tarefa pertence.' },
+        kanbanId: { type: 'string', description: 'ID da etapa (stage) à qual a tarefa pertence.' },
         title: { type: 'string', description: 'Título da tarefa.' },
         description: { type: 'string', description: 'Descrição detalhada da tarefa.' },
         status: { type: 'string', enum: ['TODO', 'IN_PROGRESS', 'DONE'], description: 'Status inicial.' },
         isSprintActive: { type: 'boolean', description: 'Se a tarefa deve ser incluída na Sprint atual ativa.' },
       },
-      required: ['stageId', 'title'],
+      required: ['kanbanId', 'title'],
     },
   },
   {
@@ -24,13 +24,13 @@ export const taskToolSchemas: Tool[] = [
     inputSchema: {
       type: 'object',
       properties: {
-        stageId: { type: 'string', description: 'ID da etapa (stage) à qual a tarefa pertence.' },
+        kanbanId: { type: 'string', description: 'ID da etapa (stage) à qual a tarefa pertence.' },
         title: { type: 'string', description: 'Título da tarefa.' },
         description: { type: 'string', description: 'Descrição detalhada da tarefa.' },
         status: { type: 'string', enum: ['TODO', 'IN_PROGRESS', 'DONE'], description: 'Status inicial.' },
         isSprintActive: { type: 'boolean', description: 'Se a tarefa deve ser incluída na Sprint atual ativa.' },
       },
-      required: ['stageId', 'title'],
+      required: ['kanbanId', 'title'],
     },
   },
   {
@@ -41,7 +41,7 @@ export const taskToolSchemas: Tool[] = [
       properties: {
         id: { type: 'string', description: 'ID da tarefa a mover.' },
         status: { type: 'string', enum: ['TODO', 'IN_PROGRESS', 'DONE'], description: 'Novo status.' },
-        stageId: { type: 'string', description: 'ID opcional do novo Stage se estiver movendo entre etapas.' },
+        kanbanId: { type: 'string', description: 'ID opcional do novo Stage se estiver movendo entre etapas.' },
       },
       required: ['id', 'status'],
     },
@@ -54,7 +54,7 @@ export const taskToolSchemas: Tool[] = [
       properties: {
         id: { type: 'string', description: 'ID da tarefa a mover.' },
         status: { type: 'string', enum: ['TODO', 'IN_PROGRESS', 'DONE'], description: 'Novo status.' },
-        stageId: { type: 'string', description: 'ID opcional da nova etapa.' },
+        kanbanId: { type: 'string', description: 'ID opcional da nova etapa.' },
       },
       required: ['id', 'status'],
     },
@@ -93,7 +93,7 @@ export const taskToolSchemas: Tool[] = [
         title: { type: 'string', description: 'Novo título da tarefa.' },
         description: { type: 'string', description: 'Nova descrição da tarefa.' },
         status: { type: 'string', enum: ['TODO', 'IN_PROGRESS', 'DONE'], description: 'Novo status.' },
-        stageId: { type: 'string', description: 'ID da nova etapa.' },
+        kanbanId: { type: 'string', description: 'ID da nova etapa.' },
         isSprintActive: { type: 'boolean', description: 'Adicionar ou remover da Sprint ativa.' },
       },
       required: ['id'],
@@ -123,11 +123,11 @@ export const taskToolSchemas: Tool[] = [
   },
   {
     name: 'list_tasks',
-    description: 'Lista tarefas com filtros opcionais de etapa (stageId) e status.',
+    description: 'Lista tarefas com filtros opcionais de etapa (kanbanId) e status.',
     inputSchema: {
       type: 'object',
       properties: {
-        stageId: { type: 'string', description: 'Filtrar por ID da etapa.' },
+        kanbanId: { type: 'string', description: 'Filtrar por ID da etapa.' },
         projectId: { type: 'string', description: 'Filtrar tarefas pelo ID do projeto.' },
         status: { type: 'string', enum: ['TODO', 'IN_PROGRESS', 'DONE'] },
         isSprintActive: { type: 'boolean', description: 'Listar apenas tarefas que estão na Sprint Semanal (true) ou apenas as que não estão (false).' },
@@ -149,18 +149,18 @@ export const taskToolSchemas: Tool[] = [
 
 export async function handleTaskTools(name: string, args: any) {
   if (name === 'create_task' || name === 'add_task') {
-    const stageId = String(args?.stageId ?? '').trim();
+    const kanbanId = String(args?.kanbanId ?? '').trim();
     const title = String(args?.title ?? '').trim();
 
-    if (!stageId) {
-      throw new Error('stageId é obrigatório');
+    if (!kanbanId) {
+      throw new Error('kanbanId é obrigatório');
     }
     if (!title) {
       throw new Error('title é obrigatório');
     }
 
     const task = await taskService.createTask({
-      stageId,
+      kanbanId,
       title,
       description: args?.description ? String(args.description).trim() : null,
       status: args?.status,
@@ -175,7 +175,7 @@ export async function handleTaskTools(name: string, args: any) {
   if (name === 'move_task' || name === 'update_task_status') {
     const id = String(args?.id ?? '').trim();
     const status = args?.status;
-    const stageId = args?.stageId ? String(args.stageId).trim() : undefined;
+    const kanbanId = args?.kanbanId ? String(args.kanbanId).trim() : undefined;
 
     if (!id || !status) {
       throw new Error('id e status são obrigatórios');
@@ -183,7 +183,7 @@ export async function handleTaskTools(name: string, args: any) {
 
     const task = await taskService.updateTask(id, {
       status,
-      stageId,
+      kanbanId,
     });
 
     return {
@@ -235,7 +235,7 @@ export async function handleTaskTools(name: string, args: any) {
       title: args?.title ? String(args.title).trim() : undefined,
       description: args?.description !== undefined ? (args.description ? String(args.description).trim() : null) : undefined,
       status: args?.status,
-      stageId: args?.stageId ? String(args.stageId).trim() : undefined,
+      kanbanId: args?.kanbanId ? String(args.kanbanId).trim() : undefined,
       isSprintActive: args?.isSprintActive !== undefined ? Boolean(args.isSprintActive) : undefined,
     });
 
@@ -272,7 +272,7 @@ export async function handleTaskTools(name: string, args: any) {
 
   if (name === 'list_tasks') {
     const filters: any = {};
-    if (args?.stageId) filters.stageId = String(args.stageId).trim();
+    if (args?.kanbanId) filters.kanbanId = String(args.kanbanId).trim();
     if (args?.projectId) filters.projectId = String(args.projectId).trim();
     if (args?.status) filters.status = args.status;
     if (args?.isSprintActive !== undefined) filters.isSprintActive = Boolean(args.isSprintActive);

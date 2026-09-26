@@ -231,8 +231,8 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ onSelectProject }) =
     if (isApt) {
       chipBg = ev.isCompleted
         ? 'bg-slate-100 text-slate-500 border-slate-200 line-through'
-        : 'bg-indigo-50 text-indigo-700 border-indigo-200';
-      icon = <Clock className="w-2.5 h-2.5 shrink-0 text-indigo-600" />;
+        : 'bg-slate-100 text-slate-900 border-slate-300';
+      icon = <Clock className="w-2.5 h-2.5 shrink-0 text-slate-900" />;
     } else if (isAcad) {
       chipBg = ev.isCompleted
         ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
@@ -255,11 +255,11 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ onSelectProject }) =
   return (
     <div className="space-y-6">
       {/* Top Banner & Action Header */}
-      <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-card">
+      <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-1">
             <div className="flex items-center gap-2.5">
-              <div className="w-10 h-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center shadow-md shadow-indigo-500/20">
+              <div className="w-10 h-10 rounded-lg bg-slate-900 text-white flex items-center justify-center shadow-sm">
                 <CalendarIcon className="w-5 h-5" />
               </div>
               <div>
@@ -267,7 +267,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ onSelectProject }) =
                   <h2 className="text-xl font-black text-slate-900 tracking-tight">
                     Calendário & Compromissos
                   </h2>
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-100 text-indigo-800 border border-indigo-200 uppercase">
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-900 border border-slate-300 uppercase">
                     Agenda Unificada
                   </span>
                 </div>
@@ -290,7 +290,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ onSelectProject }) =
 
             <button
               onClick={() => setIsCreateModalOpen(true)}
-              className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-md shadow-indigo-500/20 transition-all active:scale-98"
+              className="flex items-center gap-2 px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl shadow-sm transition-all active:scale-98"
             >
               <Plus className="w-4 h-4 stroke-[2.5]" />
               <span>+ Novo Compromisso</span>
@@ -299,9 +299,9 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ onSelectProject }) =
         </div>
 
         {/* Event Legend & Filters */}
-        <div className="flex flex-wrap items-center justify-between gap-4 mt-6 pt-6 border-t border-slate-100">
+        <div className="flex flex-wrap items-center justify-between gap-4 mt-6 pt-6 border-t border-slate-200">
           {/* Category Filter Pills */}
-          <div className="flex items-center gap-1.5 p-1 bg-slate-100 rounded-2xl border border-slate-200 text-xs font-semibold">
+          <div className="flex items-center gap-1.5 p-1 bg-slate-100 rounded-lg border border-slate-200 text-xs font-semibold">
             <button
               onClick={() => setEventTypeFilter('ALL')}
               className={`px-3 py-1.5 rounded-xl transition-all ${
@@ -316,11 +316,11 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ onSelectProject }) =
               onClick={() => setEventTypeFilter('APPOINTMENTS')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl transition-all ${
                 eventTypeFilter === 'APPOINTMENTS'
-                  ? 'bg-white text-indigo-700 shadow-xs font-bold'
+                  ? 'bg-white text-slate-900 shadow-xs font-bold'
                   : 'text-slate-500 hover:text-slate-800'
               }`}
             >
-              <span className="w-2 h-2 rounded-full bg-indigo-500" />
+              <span className="w-2 h-2 rounded-full bg-slate-900" />
               <span>Compromissos</span>
             </button>
             <button
@@ -378,7 +378,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ onSelectProject }) =
 
       {/* Error Banner */}
       {error && (
-        <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center justify-between">
+        <div className="p-4 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center justify-between">
           <div className="flex items-center gap-2">
             <AlertCircle className="w-4 h-4 shrink-0" />
             <span>{error}</span>
@@ -392,9 +392,9 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ onSelectProject }) =
       {/* Main Grid & Agenda Split View */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
         {/* Calendar Month Grid (Left 2 cols) */}
-        <div className="lg:col-span-2 bg-white rounded-3xl p-6 border border-slate-200/80 shadow-card space-y-4">
+        <div className="lg:col-span-2 bg-white rounded-xl p-6 border border-slate-200 shadow-sm space-y-4">
           {/* Weekday labels */}
-          <div className="grid grid-cols-7 gap-1 text-center pb-2 border-b border-slate-100">
+          <div className="grid grid-cols-7 gap-1 text-center pb-2 border-b border-slate-200">
             {weekdays.map((day, idx) => (
               <span
                 key={day}
@@ -410,7 +410,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ onSelectProject }) =
           {/* Month Cells */}
           {loading ? (
             <div className="flex flex-col items-center justify-center py-36 space-y-3">
-              <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
+              <Loader2 className="w-8 h-8 text-slate-900 animate-spin" />
               <p className="text-xs text-slate-500 font-medium">Carregando calendário...</p>
             </div>
           ) : (
@@ -426,12 +426,12 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ onSelectProject }) =
                   <div
                     key={cell.dateKey}
                     onClick={() => setSelectedDate(cell.dateObj)}
-                    className={`min-h-[96px] p-2 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between ${
+                    className={`min-h-[96px] p-2 rounded-lg border transition-all cursor-pointer flex flex-col justify-between ${
                       isSelected
-                        ? 'border-indigo-600 ring-2 ring-indigo-500/20 bg-indigo-50/20 shadow-xs'
+                        ? 'border-slate-900 ring-2 ring-slate-200 bg-slate-100/20 shadow-xs'
                         : cell.isCurrentMonth
                         ? 'bg-white border-slate-200/70 hover:border-slate-300 hover:bg-slate-50/50'
-                        : 'bg-slate-50/50 border-slate-100 text-slate-300'
+                        : 'bg-slate-50/50 border-slate-200 text-slate-300'
                     }`}
                   >
                     {/* Date Number Header */}
@@ -439,9 +439,9 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ onSelectProject }) =
                       <span
                         className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
                           isToday
-                            ? 'bg-indigo-600 text-white shadow-xs'
+                            ? 'bg-slate-900 text-white shadow-xs'
                             : isSelected
-                            ? 'bg-indigo-100 text-indigo-700'
+                            ? 'bg-slate-100 text-slate-900'
                             : cell.isCurrentMonth
                             ? 'text-slate-700'
                             : 'text-slate-400'
@@ -451,7 +451,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ onSelectProject }) =
                       </span>
 
                       {dayEvents.length > 0 && (
-                        <span className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
+                        <span className="w-1.5 h-1.5 rounded-full bg-slate-900" />
                       )}
                     </div>
 
@@ -472,8 +472,8 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ onSelectProject }) =
         </div>
 
         {/* Day Agenda Sidebar (Right 1 col) */}
-        <div className="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-card space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-200">
             <div>
               <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
                 Agenda do Dia
@@ -489,7 +489,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ onSelectProject }) =
 
             <button
               onClick={() => setIsCreateModalOpen(true)}
-              className="flex items-center gap-1 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-xs transition-colors"
+              className="flex items-center gap-1 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl shadow-xs transition-colors"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Novo</span>
@@ -499,7 +499,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ onSelectProject }) =
           {/* Events List for Selected Day */}
           {sortedSelectedDayEvents.length === 0 ? (
             <div className="text-center py-16 space-y-3">
-              <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center mx-auto">
+              <div className="w-12 h-12 rounded-lg bg-slate-100 text-slate-900 flex items-center justify-center mx-auto">
                 <Clock className="w-6 h-6" />
               </div>
               <div className="space-y-1">
@@ -519,11 +519,11 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ onSelectProject }) =
                 return (
                   <div
                     key={ev.id}
-                    className={`p-4 rounded-2xl border transition-all space-y-2 ${
+                    className={`p-4 rounded-lg border transition-all space-y-2 ${
                       ev.isCompleted
                         ? 'bg-slate-50 border-slate-200/70 opacity-75'
                         : isApt
-                        ? 'bg-indigo-50/40 border-indigo-200/80 shadow-xs'
+                        ? 'bg-slate-100/40 border-slate-300/80 shadow-xs'
                         : ev.projectType === 'ACADEMIC'
                         ? 'bg-pink-50/40 border-pink-200/80 shadow-xs'
                         : 'bg-sky-50/40 border-sky-200/80 shadow-xs'
@@ -541,7 +541,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ onSelectProject }) =
                             className={`w-5 h-5 rounded-lg flex items-center justify-center border transition-colors ${
                               ev.isCompleted
                                 ? 'bg-emerald-500 border-emerald-500 text-white'
-                                : 'border-indigo-300 hover:border-indigo-600 bg-white'
+                                : 'border-slate-300 hover:border-slate-900 bg-white'
                             }`}
                           >
                             {isToggling ? (
@@ -571,7 +571,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ onSelectProject }) =
                         <span
                           className={`text-[9px] font-bold uppercase px-2 py-0.5 rounded-full border ${
                             isApt
-                              ? 'bg-indigo-100 text-indigo-700 border-indigo-200'
+                              ? 'bg-slate-100 text-slate-900 border-slate-300'
                               : ev.projectType === 'ACADEMIC'
                               ? 'bg-pink-100 text-pink-700 border-pink-200'
                               : 'bg-sky-100 text-sky-700 border-sky-200'
@@ -637,7 +637,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ onSelectProject }) =
                               type="button"
                               onClick={() => onSelectProject(ev.projectTitle || '')}
                               title="Ver projeto"
-                              className="ml-1 text-slate-400 hover:text-indigo-600 transition-colors"
+                              className="ml-1 text-slate-400 hover:text-slate-900 transition-colors"
                             >
                               <ExternalLink className="w-3 h-3" />
                             </button>

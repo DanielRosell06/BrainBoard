@@ -1,25 +1,25 @@
 import type {
   Project,
-  Stage,
+  Kanban,
+  Note,
   UpdateLog,
   Member,
   Task,
   Subtask,
   ProjectStatus,
-  StageStatus,
   Status,
   ProjectType,
 } from '@prisma/client';
 
 export type {
   Project,
-  Stage,
+  Kanban,
+  Note,
   UpdateLog,
   Member,
   Task,
   Subtask,
   ProjectStatus,
-  StageStatus,
   Status,
   ProjectType,
 };
@@ -50,30 +50,27 @@ export interface ProjectFilterOptions {
 }
 
 export type ProjectWithDetails = Project & {
-  stages: (Stage & { tasks: (Task & { subtasks: Subtask[] })[] })[];
+  kanbans: (Kanban & { tasks: (Task & { subtasks: Subtask[] })[] })[];
+  notes: Note[];
   updateLogs: UpdateLog[];
   members: Member[];
 };
 
-export interface CreateStageInput {
+export interface CreateKanbanInput {
   projectId: string;
   title: string;
-  status?: string | undefined;
-  order?: number | undefined;
 }
 
-export interface UpdateStageInput {
+export interface UpdateKanbanInput {
   title?: string | undefined;
-  status?: string | undefined;
-  order?: number | undefined;
 }
 
-export type StageWithTasks = Stage & {
+export type KanbanWithTasks = Kanban & {
   tasks: (Task & { subtasks: Subtask[] })[];
 };
 
 export interface CreateTaskInput {
-  stageId: string;
+  kanbanId: string;
   title: string;
   description?: string | null | undefined;
   status?: string | undefined;
@@ -82,7 +79,7 @@ export interface CreateTaskInput {
 }
 
 export interface UpdateTaskInput {
-  stageId?: string | undefined;
+  kanbanId?: string | undefined;
   title?: string | undefined;
   description?: string | null | undefined;
   status?: string | undefined;
@@ -91,7 +88,7 @@ export interface UpdateTaskInput {
 }
 
 export interface TaskFilterOptions {
-  stageId?: string | undefined;
+  kanbanId?: string | undefined;
   projectId?: string | undefined;
   status?: string | undefined;
   isSprintActive?: boolean | undefined;
@@ -100,7 +97,7 @@ export interface TaskFilterOptions {
 
 export type TaskWithSubtasks = Task & {
   subtasks: Subtask[];
-  stage?: Stage;
+  kanban?: Kanban;
 };
 
 export interface CreateMemberInput {

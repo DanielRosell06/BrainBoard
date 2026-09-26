@@ -61,8 +61,7 @@ export const AddToSprintModal: React.FC<AddToSprintModalProps> = ({
     return tasks.filter(
       (t) =>
         t.title.toLowerCase().includes(q) ||
-        (t.description && t.description.toLowerCase().includes(q)) ||
-        (t.stage?.title && t.stage.title.toLowerCase().includes(q))
+        (t.kanban?.title && t.kanban.title.toLowerCase().includes(q))
     );
   }, [tasks, searchQuery]);
 
@@ -86,11 +85,11 @@ export const AddToSprintModal: React.FC<AddToSprintModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/35 backdrop-blur-xs animate-in fade-in duration-200">
       <div
-        className="relative w-full max-w-xl bg-white border border-slate-100 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-200"
+        className="relative w-full max-w-xl bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4.5 border-b border-slate-100 bg-white shrink-0">
+        <div className="flex items-center justify-between px-6 py-4.5 border-b border-slate-200 bg-white shrink-0">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
               <Flame className="w-4 h-4" />
@@ -114,7 +113,7 @@ export const AddToSprintModal: React.FC<AddToSprintModalProps> = ({
         </div>
 
         {/* Search Filter */}
-        <div className="p-4 border-b border-slate-100 bg-slate-50/50 shrink-0">
+        <div className="p-4 border-b border-slate-200 bg-slate-50/50 shrink-0">
           <div className="relative">
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
@@ -136,7 +135,7 @@ export const AddToSprintModal: React.FC<AddToSprintModalProps> = ({
               <p className="text-xs text-slate-500 font-medium">Carregando backlog...</p>
             </div>
           ) : error ? (
-            <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2">
+            <div className="p-4 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2">
               <AlertCircle className="w-4 h-4 shrink-0" />
               <span>{error}</span>
             </div>
@@ -157,7 +156,7 @@ export const AddToSprintModal: React.FC<AddToSprintModalProps> = ({
               return (
                 <div
                   key={task.id}
-                  className="flex items-center justify-between gap-3 p-3.5 rounded-2xl border border-slate-200/80 bg-white hover:border-amber-300 hover:shadow-xs transition-all"
+                  className="flex items-center justify-between gap-3 p-3.5 rounded-lg border border-slate-200 bg-white hover:border-amber-300 hover:shadow-xs transition-all"
                 >
                   <div className="min-w-0 flex-1 space-y-1">
                     <div className="flex items-center gap-2 flex-wrap">
@@ -168,10 +167,10 @@ export const AddToSprintModal: React.FC<AddToSprintModalProps> = ({
                         {TASK_STATUS_LABELS[task.status]}
                       </span>
                     </div>
-                    {task.stage?.title && (
+                    {task.kanban?.title && (
                       <div className="flex items-center gap-1 text-[11px] text-slate-400">
                         <Layers className="w-3 h-3 text-slate-400" />
-                        <span className="truncate">{task.stage.title}</span>
+                        <span className="truncate">{task.kanban.title}</span>
                       </div>
                     )}
                     {task.description && (
@@ -211,7 +210,7 @@ export const AddToSprintModal: React.FC<AddToSprintModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-slate-100 bg-slate-50/50 flex justify-end shrink-0">
+        <div className="p-4 border-t border-slate-200 bg-slate-50/50 flex justify-end shrink-0">
           <button
             onClick={onClose}
             className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 text-xs font-bold rounded-xl transition-colors"

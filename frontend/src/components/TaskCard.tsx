@@ -1,19 +1,15 @@
 import React, { useState } from 'react';
 import {
-  Clock,
-  PlayCircle,
   CheckCircle2,
   ArrowRight,
   ArrowLeft,
   Trash2,
   Plus,
   Loader2,
-  CheckSquare,
   Flame,
-  Calendar,
+  X
 } from 'lucide-react';
 import type { Task, TaskStatus } from '../types';
-import { TASK_STATUS_LABELS } from '../types';
 import { SubtaskItem } from './SubtaskItem';
 import { tasksApi } from '../services/api';
 
@@ -45,31 +41,6 @@ export const TaskCard: React.FC<TaskCardProps> = ({
   const [showSubtaskForm, setShowSubtaskForm] = useState(false);
   const [isSprintActive, setIsSprintActive] = useState<boolean>(Boolean(task.isSprintActive));
   const [isTogglingSprint, setIsTogglingSprint] = useState(false);
-
-  const statusConfig: Record<
-    TaskStatus,
-    {
-      iconBox: string;
-      badge: string;
-      icon: React.ReactNode;
-    }
-  > = {
-    TODO: {
-      iconBox: 'bg-amber-50 text-amber-600 border border-amber-200/80',
-      badge: 'bg-amber-100/70 text-amber-800 border border-amber-200/80',
-      icon: <Clock className="w-4 h-4" />,
-    },
-    IN_PROGRESS: {
-      iconBox: 'bg-indigo-50 text-indigo-600 border border-indigo-200/80',
-      badge: 'bg-indigo-100/70 text-indigo-800 border border-indigo-200/80',
-      icon: <PlayCircle className="w-4 h-4" />,
-    },
-    DONE: {
-      iconBox: 'bg-emerald-50 text-emerald-600 border border-emerald-200/80',
-      badge: 'bg-emerald-100/70 text-emerald-800 border border-emerald-200/80',
-      icon: <CheckCircle2 className="w-4 h-4" />,
-    },
-  };
 
   const completedSubtasks = task.subtasks?.filter((st) => st.isDone).length || 0;
   const totalSubtasks = task.subtasks?.length || 0;
@@ -150,7 +121,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
     } else if (diffDays === 1) {
       dateDisplay = 'Amanhã';
     } else {
-      dateDisplay = `${diffDays} dias restantes`;
+      dateDisplay = `${diffDays}d restantes`;
     }
   } else {
     const taskDate = new Date(task.createdAt);
@@ -163,73 +134,35 @@ export const TaskCard: React.FC<TaskCardProps> = ({
         : `Criado há ${diffDays}d`;
   }
 
-  const currentStatusConfig = statusConfig[task.status] || statusConfig.TODO;
-
   return (
-    <div className="group relative bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-card hover:shadow-card-hover hover:border-indigo-200/90 transition-all duration-200 space-y-4">
-      {/* Top Header: Status Icon Box + Badge & Actions */}
+    <div className="group relative bg-white rounded-2xl p-6 border border-neutral-200 shadow-card hover:shadow-card-hover transition-all duration-250 space-y-4">
+      {/* Top Header: Actions & Badges */}
       <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-3">
-          {/* Status Icon Box */}
-          <div
-            className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 shadow-xs ${currentStatusConfig.iconBox}`}
+        <div className="flex items-center gap-2 flex-wrap">
+          {stageName && (
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[12px] font-medium bg-neutral-100 text-neutral-600">
+              {stageName}
+            </span>
+          )}
+          {/* Quick Sprint Active Toggle Badge */}
+          <button
+            type="button"
+            onClick={handleToggleSprint}
+            disabled={isTogglingSprint}
+            title="Sprint"
+            className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[12px] font-medium transition-all ${
+              isSprintActive
+                ? 'bg-neutral-900 text-white'
+                : 'bg-neutral-100 text-neutral-400 hover:text-neutral-900 hover:bg-neutral-200'
+            }`}
           >
-            {currentStatusConfig.icon}
-          </div>
-          <div>
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <span
-                className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wide uppercase ${currentStatusConfig.badge}`}
-              >
-                {TASK_STATUS_LABELS[task.status]}
-              </span>
-              {stageName && (
-                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-600 border border-slate-200">
-                  {stageName}
-                </span>
-              )}
-              {/* Quick Sprint Active Toggle Badge */}
-              <button
-                type="button"
-                onClick={handleToggleSprint}
-                disabled={isTogglingSprint}
-                title={isSprintActive ? 'Remover da Sprint Semanal' : 'Adicionar à Sprint Semanal'}
-                className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold transition-all ${
-                  isSprintActive
-                    ? 'bg-amber-100 text-amber-800 border border-amber-300 hover:bg-amber-200 shadow-2xs'
-                    : 'text-slate-400 hover:text-amber-600 hover:bg-amber-50 border border-transparent hover:border-amber-200'
-                }`}
-              >
-                {isTogglingSprint ? (
-                  <Loader2 className="w-3 h-3 animate-spin" />
-                ) : (
-                  <Flame className={`w-3 h-3 ${isSprintActive ? 'text-amber-600 fill-amber-500' : ''}`} />
-                )}
-                <span>{isSprintActive ? 'Sprint' : '+Sprint'}</span>
-              </button>
-            </div>
-            <div className="flex items-center gap-1.5 text-[11px] mt-0.5 font-medium">
-              {task.dueDate ? (
-                <span
-                  className={`inline-flex items-center gap-1 ${
-                    isOverdue
-                      ? 'text-rose-600 font-bold'
-                      : task.status === 'DONE'
-                      ? 'text-slate-400'
-                      : 'text-indigo-600 font-semibold'
-                  }`}
-                >
-                  <Calendar className="w-3 h-3" />
-                  <span>{dateDisplay}</span>
-                </span>
-              ) : (
-                <span className="text-slate-400 flex items-center gap-1">
-                  <Clock className="w-3 h-3 text-slate-400" />
-                  <span>{dateDisplay}</span>
-                </span>
-              )}
-            </div>
-          </div>
+            {isTogglingSprint ? (
+              <Loader2 className="w-3 h-3 animate-spin" />
+            ) : (
+              <Flame className={`w-3 h-3 ${isSprintActive ? 'text-white fill-white' : ''}`} />
+            )}
+            <span>Sprint</span>
+          </button>
         </div>
 
         {/* Delete button (Trash2 / onDeleteTask) */}
@@ -237,10 +170,10 @@ export const TaskCard: React.FC<TaskCardProps> = ({
           onClick={handleDelete}
           disabled={isDeleting}
           aria-label="Excluir tarefa"
-          className="text-slate-400 hover:text-rose-500 hover:bg-rose-50 p-1.5 rounded-lg transition-colors opacity-70 group-hover:opacity-100"
+          className="text-neutral-300 hover:text-red-500 hover:bg-red-50 p-1.5 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
         >
           {isDeleting ? (
-            <Loader2 className="w-4 h-4 animate-spin text-slate-400" />
+            <Loader2 className="w-4 h-4 animate-spin text-neutral-400" />
           ) : (
             <Trash2 className="w-4 h-4" />
           )}
@@ -250,57 +183,63 @@ export const TaskCard: React.FC<TaskCardProps> = ({
       {/* Task Title & Description */}
       <div>
         <h4
-          className={`text-sm font-bold leading-snug tracking-tight transition-colors ${
+          className={`text-base font-medium leading-snug tracking-tight transition-colors ${
             task.status === 'DONE'
-              ? 'text-slate-400 line-through font-normal'
-              : 'text-slate-900 group-hover:text-indigo-600'
+              ? 'text-neutral-400 line-through font-normal'
+              : 'text-neutral-900'
           }`}
         >
           {task.title}
         </h4>
         {task.description && (
-          <p className="mt-1 text-xs text-slate-500 line-clamp-2 leading-relaxed font-normal">
+          <p className="mt-1 text-sm text-neutral-500 line-clamp-2 leading-relaxed font-normal">
             {task.description}
           </p>
         )}
       </div>
+      
+      {/* Date metadata */}
+      <div className="flex items-center gap-1.5 text-[12px] font-medium">
+        <span
+          className={`${
+            isOverdue
+              ? 'text-red-500 font-semibold'
+              : task.status === 'DONE'
+              ? 'text-neutral-400'
+              : 'text-neutral-500'
+          }`}
+        >
+          {dateDisplay}
+        </span>
+      </div>
 
-      {/* Subtasks & Progress Bar Section */}
-      <div className="space-y-2 pt-2 border-t border-slate-100">
-        <div className="flex items-center justify-between text-xs font-medium">
-          <span className="flex items-center gap-1.5 text-slate-600">
-            <CheckSquare className="w-3.5 h-3.5 text-slate-400" />
-            <span>Subtarefas</span>
-            <span className="font-bold text-slate-800">
-              {totalSubtasks > 0 && `(${completedSubtasks}/${totalSubtasks})`}
-            </span>
+      {/* Subtasks Section */}
+      <div className="space-y-3 pt-4 border-t border-neutral-100">
+        <div className="flex items-center justify-between text-[12px] font-medium">
+          <span className="text-neutral-500">
+            {totalSubtasks > 0 ? `${completedSubtasks} de ${totalSubtasks} concluídas` : 'Sem subtarefas'}
           </span>
 
           <button
             type="button"
             onClick={() => setShowSubtaskForm(!showSubtaskForm)}
-            className="text-indigo-600 hover:text-indigo-700 transition-colors flex items-center gap-1 font-semibold text-xs"
+            className="text-neutral-400 hover:text-neutral-900 transition-colors flex items-center justify-center p-1"
           >
-            <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-            <span>Adicionar</span>
+            <Plus className="w-4 h-4" />
           </button>
         </div>
 
-        {/* Colorful Gradient Progress Bar */}
-        <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden p-0.5">
+        {/* Solid Progress Bar */}
+        <div className="w-full bg-neutral-100 rounded-full h-1.5 overflow-hidden">
           <div
-            className={`h-full rounded-full transition-all duration-500 bg-gradient-to-r ${
-              progressPercent === 100
-                ? 'from-emerald-400 to-teal-500'
-                : 'from-indigo-500 via-purple-500 to-pink-500'
-            }`}
+            className="h-full rounded-full transition-all duration-500 bg-neutral-900"
             style={{ width: `${totalSubtasks > 0 ? progressPercent : 0}%` }}
           />
         </div>
 
-        {/* Subtask list with checkboxes and isDone */}
+        {/* Subtask list */}
         {task.subtasks && task.subtasks.length > 0 && (
-          <div className="space-y-1.5 max-h-36 overflow-y-auto pr-1">
+          <div className="space-y-2 max-h-36 overflow-y-auto pr-1">
             {task.subtasks.map((st) => (
               <SubtaskItem
                 key={st.id}
@@ -312,23 +251,23 @@ export const TaskCard: React.FC<TaskCardProps> = ({
           </div>
         )}
 
-        {/* Inline Add Subtask Input Form (subtaskTitle / Nova subtarefa) */}
+        {/* Inline Add Subtask Input Form */}
         {showSubtaskForm && (
-          <form onSubmit={handleAddSubtask} className="flex items-center gap-1.5 pt-1.5">
+          <form onSubmit={handleAddSubtask} className="flex items-center gap-2 pt-2">
             <input
               type="text"
               value={subtaskTitle}
               onChange={(e) => setSubtaskTitle(e.target.value)}
-              placeholder="Nova subtarefa..."
+              placeholder="Subtarefa..."
               autoFocus
-              className="flex-1 bg-slate-50 border border-slate-200 focus:border-indigo-500 focus:bg-white rounded-xl px-3 py-1.5 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500/20"
+              className="flex-1 bg-neutral-50 border border-neutral-200 focus:border-neutral-900 focus:bg-white rounded-xl px-3 py-2 text-sm text-neutral-900 placeholder-neutral-400 focus:outline-none transition-all"
             />
             <button
               type="submit"
               disabled={isAddingSubtask || !subtaskTitle.trim()}
-              className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-semibold rounded-xl transition-colors flex items-center gap-1 shadow-xs"
+              className="px-3 py-2 bg-neutral-900 hover:bg-neutral-800 disabled:opacity-50 text-white text-sm font-medium rounded-xl transition-colors flex items-center justify-center"
             >
-              {isAddingSubtask ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Salvar'}
+              {isAddingSubtask ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
             </button>
             <button
               type="button"
@@ -336,30 +275,27 @@ export const TaskCard: React.FC<TaskCardProps> = ({
                 setShowSubtaskForm(false);
                 setSubtaskTitle('');
               }}
-              className="px-2 py-1.5 text-slate-400 hover:text-slate-600 text-xs rounded-lg hover:bg-slate-100"
+              className="px-2 py-2 text-neutral-400 hover:text-neutral-700 text-sm rounded-xl hover:bg-neutral-100"
             >
-              ✕
+              <X className="w-4 h-4" />
             </button>
           </form>
         )}
       </div>
 
       {/* Movement Action Buttons */}
-      <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
+      <div className="pt-4 border-t border-neutral-100 flex items-center justify-between gap-2">
         {task.status === 'TODO' && (
           <button
             type="button"
             onClick={() => handleMove('IN_PROGRESS')}
             disabled={isMoving}
-            className="w-full flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-semibold bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200/80 transition-all shadow-xs"
+            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium bg-neutral-100 hover:bg-neutral-200 text-neutral-900 transition-all"
           >
             {isMoving ? (
-              <Loader2 className="w-3 h-3 animate-spin" />
+              <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
-              <>
-                <span>Iniciar</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </>
+              <ArrowRight className="w-4 h-4" />
             )}
           </button>
         )}
@@ -370,19 +306,17 @@ export const TaskCard: React.FC<TaskCardProps> = ({
               type="button"
               onClick={() => handleMove('TODO')}
               disabled={isMoving}
-              className="flex-1 flex items-center justify-center gap-1 py-2 px-2.5 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 transition-all"
+              className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium bg-neutral-100 hover:bg-neutral-200 text-neutral-900 transition-all"
             >
-              <ArrowLeft className="w-3.5 h-3.5" />
-              <span>Voltar</span>
+              <ArrowLeft className="w-4 h-4" />
             </button>
             <button
               type="button"
               onClick={() => handleMove('DONE')}
               disabled={isMoving}
-              className="flex-1 flex items-center justify-center gap-1 py-2 px-2.5 rounded-xl text-xs font-semibold bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 transition-all shadow-xs"
+              className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium bg-neutral-900 hover:bg-neutral-800 text-white transition-all"
             >
-              <span>Concluir</span>
-              <CheckCircle2 className="w-3.5 h-3.5" />
+              <CheckCircle2 className="w-4 h-4" />
             </button>
           </>
         )}
@@ -392,15 +326,12 @@ export const TaskCard: React.FC<TaskCardProps> = ({
             type="button"
             onClick={() => handleMove('IN_PROGRESS')}
             disabled={isMoving}
-            className="w-full flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 transition-all"
+            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium bg-neutral-100 hover:bg-neutral-200 text-neutral-900 transition-all"
           >
             {isMoving ? (
-              <Loader2 className="w-3 h-3 animate-spin" />
+              <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
-              <>
-                <ArrowLeft className="w-3.5 h-3.5" />
-                <span>Reabrir</span>
-              </>
+              <ArrowLeft className="w-4 h-4" />
             )}
           </button>
         )}

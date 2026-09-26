@@ -1,7 +1,7 @@
 import React from 'react';
-import { Github, Users, Layers, BookOpen, Calendar, Trash2 } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 import type { ProjectSummary, ProjectStatus } from '../types';
-import { PROJECT_STATUS_LABELS, PROJECT_STATUS_COLORS } from '../types';
+import { PROJECT_STATUS_LABELS } from '../types';
 
 interface ProjectCardProps {
   project: ProjectSummary;
@@ -10,9 +10,9 @@ interface ProjectCardProps {
 }
 
 const STATUS_DOT: Record<ProjectStatus, string> = {
-  PLANNING: 'bg-amber-400',
-  ACTIVE: 'bg-blue-500',
-  COMPLETED: 'bg-emerald-500',
+  PLANNING: 'bg-neutral-400',
+  ACTIVE: 'bg-neutral-900',
+  COMPLETED: 'bg-green-500',
 };
 
 export const ProjectCard: React.FC<ProjectCardProps> = ({ project, onClick, onDelete }) => {
@@ -23,7 +23,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project, onClick, onDe
   });
 
   return (
-    <div className="group relative w-full text-left bg-white rounded-2xl p-5 border border-slate-100 shadow-sm hover:shadow-md hover:border-indigo-200 transition-all duration-200">
+    <div className="group relative w-full text-left bg-white rounded-2xl p-6 border border-neutral-200 shadow-card hover:shadow-card-hover transition-all duration-250">
       {/* Clickable Area */}
       <button
         type="button"
@@ -34,13 +34,13 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project, onClick, onDe
 
       <div className="relative z-10">
         {/* Header */}
-        <div className="flex items-start justify-between gap-3 mb-3">
+        <div className="flex items-start justify-between gap-3 mb-4">
           <div className="flex-1 min-w-0">
-            <h3 className="text-base font-semibold text-slate-800 truncate group-hover:text-indigo-700 transition-colors cursor-pointer" onClick={() => onClick(project.id)}>
+            <h3 className="text-base font-medium text-neutral-900 truncate cursor-pointer" onClick={() => onClick(project.id)}>
               {project.title}
             </h3>
             {project.description && (
-              <p className="mt-0.5 text-sm text-slate-400 line-clamp-2 leading-relaxed">
+              <p className="mt-1 text-sm text-neutral-500 line-clamp-2 leading-relaxed">
                 {project.description}
               </p>
             )}
@@ -55,14 +55,14 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project, onClick, onDe
                   e.stopPropagation();
                   onDelete(project.id, project.title);
                 }}
-                className="p-1.5 rounded-lg text-slate-300 hover:text-rose-600 hover:bg-rose-50 transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
+                className="p-1.5 rounded-lg text-neutral-300 hover:text-red-500 hover:bg-red-50 transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
                 aria-label="Excluir projeto"
               >
                 <Trash2 className="w-4 h-4" />
               </button>
             )}
             <span
-              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${PROJECT_STATUS_COLORS[project.status]}`}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[12px] font-medium text-neutral-600 bg-neutral-100 border border-neutral-200"
             >
               <span className={`w-1.5 h-1.5 rounded-full ${STATUS_DOT[project.status]}`} />
               {PROJECT_STATUS_LABELS[project.status]}
@@ -71,41 +71,35 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project, onClick, onDe
         </div>
 
         {/* Meta info */}
-        <div className="flex flex-wrap items-center gap-3 text-xs text-slate-400 mt-4 pt-3 border-t border-slate-100">
+        <div className="flex flex-wrap items-center gap-3 text-[12px] text-neutral-500 mt-6 pt-4 border-t border-neutral-100">
           {project._count && (
-            <>
-              <span className="flex items-center gap-1">
-                <Layers className="w-3.5 h-3.5" />
-                {project._count.stages} etapas
-              </span>
-              <span className="flex items-center gap-1">
-                <Users className="w-3.5 h-3.5" />
-                {project._count.members} membros
-              </span>
-              <span className="flex items-center gap-1">
-                <BookOpen className="w-3.5 h-3.5" />
-                {project._count.updateLogs} logs
-              </span>
-            </>
+            <div className="flex items-center gap-2">
+              <span>{project._count.kanbans} quadros</span>
+              <span>·</span>
+              <span>{project._count.members} membros</span>
+              <span>·</span>
+              <span>{project._count.updateLogs} logs</span>
+            </div>
           )}
 
-          <span className="flex items-center gap-1 ml-auto">
-            <Calendar className="w-3.5 h-3.5" />
+          <span className="ml-auto">
             {formattedDate}
           </span>
 
           {project.githubRepo && (
-            <a
-              href={project.githubRepo}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
-              className="flex items-center gap-1 text-slate-400 hover:text-indigo-600 transition-colors relative z-20"
-              aria-label="Abrir repositório no GitHub"
-            >
-              <Github className="w-3.5 h-3.5" />
-              GitHub
-            </a>
+            <>
+              <span>·</span>
+              <a
+                href={project.githubRepo}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="flex items-center gap-1 text-neutral-500 hover:text-neutral-900 transition-colors relative z-20 font-medium"
+                aria-label="Abrir repositório no GitHub"
+              >
+                GitHub
+              </a>
+            </>
           )}
         </div>
       </div>

@@ -7,7 +7,7 @@ export type StageStatus = 'PLANNING' | 'IN_PROGRESS' | 'COMPLETED';
 export type TaskStatus = 'TODO' | 'IN_PROGRESS' | 'DONE';
 export type ProjectType = 'SOFTWARE';
 export type SprintStatus = 'ACTIVE' | 'COMPLETED' | 'PLANNING';
-export type ActiveView = 'PROJECTS' | 'BOARD' | 'SPRINT' | 'PROJECT_SPRINT' | 'ACADEMIC' | 'CALENDAR';
+export type ActiveView = 'PROJECTS' | 'BOARD' | 'NOTE' | 'SPRINT' | 'PROJECT_SPRINT' | 'ACADEMIC' | 'CALENDAR' | 'CHAT';
 
 export type AssignmentType = 'EXAM' | 'HOMEWORK' | 'PROJECT' | 'PRESENTATION' | 'READING' | 'OTHER';
 export type AssignmentStatus = 'TODO' | 'IN_PROGRESS' | 'DONE';
@@ -68,23 +68,31 @@ export interface Task {
   title: string;
   description: string | null;
   status: TaskStatus;
-  stageId: string;
+  kanbanId: string;
   dueDate?: string | null;
   isSprintActive?: boolean | null;
   subtasks: Subtask[];
-  stage?: Stage;
+  kanban?: Kanban;
   createdAt: string;
   updatedAt: string;
 }
 
-// ---- Stage (Milestone) -------------------------------------
-export interface Stage {
+// ---- Kanban (Board) -------------------------------------
+export interface Kanban {
   id: string;
   title: string;
-  order: number;
-  status: StageStatus;
   projectId: string;
   tasks: Task[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ---- Note --------------------------------------------------
+export interface Note {
+  id: string;
+  title: string;
+  content: string;
+  projectId: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -121,7 +129,8 @@ export interface Project {
   type?: ProjectType;
   githubRepo: string | null;
   settings: Record<string, unknown> | null;
-  stages: Stage[];
+  kanbans: Kanban[];
+  notes: Note[];
   sprints: Sprint[];
   updateLogs: UpdateLog[];
   members: Member[];
@@ -139,8 +148,11 @@ export interface ProjectSummary {
   githubRepo: string | null;
   createdAt: string;
   updatedAt: string;
+  kanbans?: Kanban[];
+  notes?: Note[];
   _count?: {
-    stages: number;
+    kanbans: number;
+    notes: number;
     members: number;
     updateLogs: number;
   };
@@ -160,13 +172,11 @@ export interface CreateProjectInput {
 // DRY: todos os campos de criação são opcionais na atualização
 export type UpdateProjectInput = Partial<CreateProjectInput>;
 
-export interface CreateStageInput {
+export interface CreateKanbanInput {
   title: string;
-  order?: number;
-  status?: StageStatus;
 }
 
-export type UpdateStageInput = Partial<CreateStageInput>;
+export type UpdateKanbanInput = Partial<CreateKanbanInput>;
 
 export interface CreateTaskInput {
   title: string;
@@ -180,7 +190,7 @@ export interface UpdateTaskInput {
   title?: string;
   description?: string | null;
   status?: TaskStatus;
-  stageId?: string;
+  kanbanId?: string;
   dueDate?: string | null;
   isSprintActive?: boolean;
 }
@@ -306,3 +316,20 @@ export const STAGE_STATUS_COLORS: Record<StageStatus, string> = {
   IN_PROGRESS: 'bg-blue-100 text-blue-700 border-blue-200',
   COMPLETED: 'bg-emerald-100 text-emerald-700 border-emerald-200',
 };
+
+// ---- Chat Types --------------------------------------------
+export interface ChatMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  conversationId: string;
+  createdAt: string;
+}
+
+export interface ChatConversation {
+  id: string;
+  title: string;
+  createdAt: string;
+  updatedAt: string;
+  messages?: ChatMessage[];
+}

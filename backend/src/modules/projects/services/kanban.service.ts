@@ -1,17 +1,14 @@
-import { StageStatus } from '@prisma/client';
-import type { Stage } from '@prisma/client';
+import type { Kanban } from '@prisma/client';
 import { prisma } from '../../../prisma.js';
 import { ValidationError, NotFoundError } from '../../shared/errors.js';
 import type {
-  CreateStageInput,
-  UpdateStageInput,
-  StageWithTasks,
+  CreateKanbanInput,
+  UpdateKanbanInput,
+  KanbanWithTasks,
 } from '../projects.types.js';
 
-export const VALID_STAGE_STATUSES: StageStatus[] = ['PLANNING', 'IN_PROGRESS', 'COMPLETED'];
-
-export class StageService {
-  async listStagesByProject(projectId: string): Promise<StageWithTasks[]> {
+export class KanbanService {
+  async listKanbansByProject(projectId: string): Promise<KanbanWithTasks[]> {
     if (!projectId || typeof projectId !== 'string') {
       throw new ValidationError('Project ID is required');
     }
@@ -24,9 +21,9 @@ export class StageService {
       throw new NotFoundError('Project not found');
     }
 
-    return await prisma.stage.findMany({
+    return await prisma.kanban.findMany({
       where: { projectId },
-      orderBy: { order: 'asc' },
+      orderBy: { createdAt: 'asc' },
       include: {
         tasks: {
           orderBy: { createdAt: 'asc' },
@@ -40,12 +37,12 @@ export class StageService {
     });
   }
 
-  async getStageById(id: string): Promise<StageWithTasks | null> {
+  async getKanbanById(id: string): Promise<KanbanWithTasks | null> {
     if (!id || typeof id !== 'string') {
-      throw new ValidationError('Stage ID is required');
+      throw new ValidationError('Kanban ID is required');
     }
 
-    return await prisma.stage.findUnique({
+    return await prisma.kanban.findUnique({
       where: { id },
       include: {
         tasks: {
@@ -60,7 +57,7 @@ export class StageService {
     });
   }
 
-  async createStage(data: CreateStageInput): Promise<StageWithTasks> {
+  async createKanban(data: CreateKanbanInput): Promise<KanbanWithTasks> {
     if (!data.projectId || typeof data.projectId !== 'string') {
       throw new ValidationError('Project ID is required');
     }
@@ -77,34 +74,10 @@ export class StageService {
       throw new NotFoundError('Project not found');
     }
 
-    let status: StageStatus = 'PLANNING';
-    if (data.status !== undefined) {
-      if (!VALID_STAGE_STATUSES.includes(data.status as StageStatus)) {
-        throw new ValidationError(
-          `Invalid stage status: ${data.status}. Must be one of: ${VALID_STAGE_STATUSES.join(', ')}`
-        );
-      }
-      status = data.status as StageStatus;
-    }
-
-    let order = 0;
-    if (data.order !== undefined && typeof data.order === 'number') {
-      order = data.order;
-    } else {
-      const maxStage = await prisma.stage.findFirst({
-        where: { projectId: data.projectId },
-        orderBy: { order: 'desc' },
-        select: { order: true },
-      });
-      order = maxStage ? maxStage.order + 1 : 0;
-    }
-
-    return await prisma.stage.create({
+    return await prisma.kanban.create({
       data: {
         projectId: data.projectId,
         title: data.title.trim(),
-        order,
-        status,
       },
       include: {
         tasks: {
@@ -114,15 +87,13 @@ export class StageService {
     });
   }
 
-  async updateStage(id: string, data: UpdateStageInput): Promise<StageWithTasks> {
+  async updateKanban(id: string, data: UpdateKanbanInput): Promise<KanbanWithTasks> {
     if (!id || typeof id !== 'string') {
-      throw new ValidationError('Stage ID is required');
+      throw new ValidationError('Kanban ID is required');
     }
 
     const updateData: {
       title?: string;
-      order?: number;
-      status?: StageStatus;
     } = {};
 
     if (data.title !== undefined) {
@@ -132,24 +103,8 @@ export class StageService {
       updateData.title = data.title.trim();
     }
 
-    if (data.order !== undefined) {
-      if (typeof data.order !== 'number') {
-        throw new ValidationError('Order must be a number');
-      }
-      updateData.order = data.order;
-    }
-
-    if (data.status !== undefined) {
-      if (!VALID_STAGE_STATUSES.includes(data.status as StageStatus)) {
-        throw new ValidationError(
-          `Invalid stage status: ${data.status}. Must be one of: ${VALID_STAGE_STATUSES.join(', ')}`
-        );
-      }
-      updateData.status = data.status as StageStatus;
-    }
-
     try {
-      return await prisma.stage.update({
+      return await prisma.kanban.update({
         where: { id },
         data: updateData,
         include: {
@@ -160,28 +115,28 @@ export class StageService {
       });
     } catch (error: any) {
       if (error && typeof error === 'object' && 'code' in error && error.code === 'P2025') {
-        throw new NotFoundError('Stage not found');
+        throw new NotFoundError('Kanban not found');
       }
       throw error;
     }
   }
 
-  async deleteStage(id: string): Promise<Stage> {
+  async deleteKanban(id: string): Promise<Kanban> {
     if (!id || typeof id !== 'string') {
-      throw new ValidationError('Stage ID is required');
+      throw new ValidationError('Kanban ID is required');
     }
 
     try {
-      return await prisma.stage.delete({
+      return await prisma.kanban.delete({
         where: { id },
       });
     } catch (error: any) {
       if (error && typeof error === 'object' && 'code' in error && error.code === 'P2025') {
-        throw new NotFoundError('Stage not found');
+        throw new NotFoundError('Kanban not found');
       }
       throw error;
     }
   }
 }
 
-export const stageService = new StageService();
+export const kanbanService = new KanbanService();

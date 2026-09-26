@@ -1,14 +1,12 @@
 import type {
   Project,
   ProjectSummary,
-  Stage,
   Task,
   Subtask,
   Member,
   UpdateLog,
   CreateProjectInput,
   UpdateProjectInput,
-  CreateStageInput,
   CreateTaskInput,
   UpdateTaskInput,
   CreateMemberInput,
@@ -109,15 +107,15 @@ export const projectsApi = {
 };
 
 // ============================================================
-// Stages API
+// Kanbans API
 // ============================================================
-export const stagesApi = {
-  list(projectId: string): Promise<Stage[]> {
-    return request(`/api/projects/${projectId}/stages`);
+export const kanbansApi = {
+  list(projectId: string): Promise<import('../types').Kanban[]> {
+    return request(`/api/projects/${projectId}/kanbans`);
   },
 
-  create(projectId: string, input: CreateStageInput): Promise<Stage> {
-    return request(`/api/projects/${projectId}/stages`, {
+  create(projectId: string, input: import('../types').CreateKanbanInput): Promise<import('../types').Kanban> {
+    return request(`/api/projects/${projectId}/kanbans`, {
       method: 'POST',
       body: JSON.stringify(input),
     });
@@ -125,17 +123,50 @@ export const stagesApi = {
 
   update(
     projectId: string,
-    stageId: string,
-    input: Partial<CreateStageInput>
-  ): Promise<Stage> {
-    return request(`/api/projects/${projectId}/stages/${stageId}`, {
+    kanbanId: string,
+    input: Partial<import('../types').CreateKanbanInput>
+  ): Promise<import('../types').Kanban> {
+    return request(`/api/projects/${projectId}/kanbans/${kanbanId}`, {
       method: 'PATCH',
       body: JSON.stringify(input),
     });
   },
 
-  delete(projectId: string, stageId: string): Promise<void> {
-    return request(`/api/projects/${projectId}/stages/${stageId}`, {
+  delete(projectId: string, kanbanId: string): Promise<void> {
+    return request(`/api/projects/${projectId}/kanbans/${kanbanId}`, {
+      method: 'DELETE',
+    });
+  },
+};
+
+// ============================================================
+// Notes API
+// ============================================================
+export const notesApi = {
+  list(projectId: string): Promise<import('../types').Note[]> {
+    return request(`/api/projects/${projectId}/notes`);
+  },
+
+  create(projectId: string, input: { title: string; content: string }): Promise<import('../types').Note> {
+    return request(`/api/projects/${projectId}/notes`, {
+      method: 'POST',
+      body: JSON.stringify(input),
+    });
+  },
+
+  update(
+    projectId: string,
+    noteId: string,
+    input: { title?: string; content?: string }
+  ): Promise<import('../types').Note> {
+    return request(`/api/projects/${projectId}/notes/${noteId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(input),
+    });
+  },
+
+  delete(projectId: string, noteId: string): Promise<void> {
+    return request(`/api/projects/${projectId}/notes/${noteId}`, {
       method: 'DELETE',
     });
   },
@@ -145,29 +176,29 @@ export const stagesApi = {
 // Tasks API
 // ============================================================
 export const tasksApi = {
-  list(stageId: string): Promise<Task[]> {
-    return request(`/api/stages/${stageId}/tasks`);
+  list(kanbanId: string): Promise<Task[]> {
+    return request(`/api/kanbans/${kanbanId}/tasks`);
   },
 
   listAll(filters?: {
     isSprintActive?: boolean;
     status?: TaskStatus;
     hasDueDate?: boolean;
-    stageId?: string;
+    kanbanId?: string;
     projectId?: string;
   }): Promise<Task[]> {
     const params = new URLSearchParams();
     if (filters?.isSprintActive !== undefined) params.set('isSprintActive', String(filters.isSprintActive));
     if (filters?.status) params.set('status', filters.status);
     if (filters?.hasDueDate !== undefined) params.set('hasDueDate', String(filters.hasDueDate));
-    if (filters?.stageId) params.set('stageId', filters.stageId);
+    if (filters?.kanbanId) params.set('kanbanId', filters.kanbanId);
     if (filters?.projectId) params.set('projectId', filters.projectId);
     const qs = params.toString();
     return request(`/api/tasks${qs ? `?${qs}` : ''}`);
   },
 
-  create(stageId: string, input: CreateTaskInput): Promise<Task> {
-    return request(`/api/stages/${stageId}/tasks`, {
+  create(kanbanId: string, input: CreateTaskInput): Promise<Task> {
+    return request(`/api/kanbans/${kanbanId}/tasks`, {
       method: 'POST',
       body: JSON.stringify(input),
     });
@@ -379,5 +410,26 @@ export const academicApi = {
   },
   deleteAssignment(id: string): Promise<void> {
     return request(`/api/academic/assignments/${id}`, { method: 'DELETE' });
+  },
+};
+
+// ============================================================
+// Chat API
+// ============================================================
+export const chatApi = {
+  listConversations(): Promise<import('../types').ChatConversation[]> {
+    return request('/api/chat/conversations');
+  },
+  createConversation(title?: string): Promise<import('../types').ChatConversation> {
+    return request('/api/chat/conversations', { method: 'POST', body: JSON.stringify({ title }) });
+  },
+  getConversation(id: string): Promise<import('../types').ChatConversation> {
+    return request(`/api/chat/conversations/${id}`);
+  },
+  deleteConversation(id: string): Promise<void> {
+    return request(`/api/chat/conversations/${id}`, { method: 'DELETE' });
+  },
+  sendMessage(conversationId: string, content: string): Promise<import('../types').ChatMessage> {
+    return request(`/api/chat/conversations/${conversationId}/messages`, { method: 'POST', body: JSON.stringify({ content }) });
   },
 };

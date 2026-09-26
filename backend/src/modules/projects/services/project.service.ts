@@ -37,14 +37,17 @@ export class ProjectService {
     return await prisma.project.findMany({
       where,
       include: {
-        stages: {
-          orderBy: { order: 'asc' },
+        kanbans: {
+          orderBy: { createdAt: 'asc' },
           include: {
             tasks: {
               orderBy: { createdAt: 'asc' },
               include: { subtasks: { orderBy: { createdAt: 'asc' } } },
             },
           },
+        },
+        notes: {
+          orderBy: { createdAt: 'asc' },
         },
         updateLogs: {
           orderBy: { createdAt: 'desc' },
@@ -65,14 +68,17 @@ export class ProjectService {
     return await prisma.project.findUnique({
       where: { id },
       include: {
-        stages: {
-          orderBy: { order: 'asc' },
+        kanbans: {
+          orderBy: { createdAt: 'asc' },
           include: {
             tasks: {
               orderBy: { createdAt: 'asc' },
               include: { subtasks: { orderBy: { createdAt: 'asc' } } },
             },
           },
+        },
+        notes: {
+          orderBy: { createdAt: 'asc' },
         },
         updateLogs: {
           orderBy: { createdAt: 'desc' },
@@ -137,13 +143,16 @@ export class ProjectService {
         ...(settings !== undefined ? { settings } : {}),
       },
       include: {
-        stages: {
-          orderBy: { order: 'asc' },
+        kanbans: {
+          orderBy: { createdAt: 'asc' },
           include: {
             tasks: {
               include: { subtasks: true },
             },
           },
+        },
+        notes: {
+          orderBy: { createdAt: 'asc' },
         },
         updateLogs: true,
         members: true,
@@ -215,13 +224,16 @@ export class ProjectService {
         where: { id },
         data: updateData,
         include: {
-          stages: {
-            orderBy: { order: 'asc' },
+          kanbans: {
+            orderBy: { createdAt: 'asc' },
             include: {
               tasks: {
                 include: { subtasks: true },
               },
             },
+          },
+          notes: {
+            orderBy: { createdAt: 'asc' },
           },
           updateLogs: {
             orderBy: { createdAt: 'desc' },

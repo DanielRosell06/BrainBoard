@@ -19,12 +19,19 @@ projectsRouter.post('/api/projects/:projectId/sprints', sprintController.createS
 projectsRouter.patch('/api/sprints/:sprintId', sprintController.updateSprint);
 projectsRouter.delete('/api/sprints/:sprintId', sprintController.deleteSprint);
 
-// Stages
-projectsRouter.get('/api/projects/:projectId/stages', controller.listStagesByProject);
-projectsRouter.post('/api/projects/:projectId/stages', controller.createStage);
-projectsRouter.get('/api/stages/:id', controller.getStageById);
-projectsRouter.patch('/api/stages/:id', controller.updateStage);
-projectsRouter.delete('/api/stages/:id', controller.deleteStage);
+// Kanbans
+projectsRouter.get('/api/projects/:projectId/kanbans', controller.listKanbansByProject);
+projectsRouter.post('/api/projects/:projectId/kanbans', controller.createKanban);
+projectsRouter.get('/api/kanbans/:id', controller.getKanbanById);
+projectsRouter.patch('/api/kanbans/:id', controller.updateKanban);
+projectsRouter.delete('/api/kanbans/:id', controller.deleteKanban);
+
+// Notes
+projectsRouter.get('/api/projects/:projectId/notes', controller.listNotesByProject);
+projectsRouter.post('/api/projects/:projectId/notes', controller.createNote);
+projectsRouter.get('/api/notes/:id', controller.getNoteById);
+projectsRouter.patch('/api/notes/:id', controller.updateNote);
+projectsRouter.delete('/api/notes/:id', controller.deleteNote);
 
 // Update Logs
 projectsRouter.get('/api/projects/:projectId/update-logs', controller.listLogsByProject);
@@ -41,10 +48,10 @@ projectsRouter.delete('/api/members/:id', controller.deleteMember);
 
 // Tasks
 projectsRouter.get('/api/tasks', controller.listTasks);
-projectsRouter.get('/api/stages/:stageId/tasks', controller.listTasksByStage);
+projectsRouter.get('/api/kanbans/:kanbanId/tasks', controller.listTasksByKanban);
 projectsRouter.get('/api/tasks/:id', controller.getTaskById);
 projectsRouter.post('/api/tasks', controller.createTask);
-projectsRouter.post('/api/stages/:stageId/tasks', controller.createTask);
+projectsRouter.post('/api/kanbans/:kanbanId/tasks', controller.createTask);
 projectsRouter.patch('/api/tasks/:id', controller.updateTask);
 projectsRouter.patch('/api/tasks/:id/status', controller.updateTaskStatus);
 projectsRouter.delete('/api/tasks/:id', controller.deleteTask);
