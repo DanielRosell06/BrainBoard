@@ -27,7 +27,7 @@ export interface TopHeaderProps {
 
 export const TopHeader: React.FC<TopHeaderProps> = ({
   currentView = 'PROJECTS',
-  onSelectView,
+  
   searchQuery,
   onSearchChange,
   onOpenCreateModal,
@@ -148,28 +148,6 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
             )}
           </div>
         </div>
-
-        {/* Lower Row: Minimal Tabs */}
-        {onSelectView && (
-          <div className="flex items-center gap-4 overflow-x-auto scrollbar-none pb-0.5">
-            {viewTabs.map((tab) => {
-              const isActive = currentView === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => onSelectView(tab.id)}
-                  className={`py-1 text-sm transition-all whitespace-nowrap ${
-                    isActive
-                      ? 'font-semibold text-neutral-900 border-b-2 border-neutral-900'
-                      : 'font-medium text-neutral-500 hover:text-neutral-900 border-b-2 border-transparent'
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              );
-            })}
-          </div>
-        )}
       </div>
     </header>
   );

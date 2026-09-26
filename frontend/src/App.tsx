@@ -453,7 +453,7 @@ export const App: React.FC = () => {
         />
 
         {/* Main Content Area */}
-        <main className="flex-1 max-w-7xl w-full mx-auto px-8 lg:px-12 py-8 space-y-8">
+        <main className={`flex-1 w-full mx-auto ${currentView === 'CHAT' ? 'max-w-none px-0 py-0' : 'max-w-7xl px-8 lg:px-12 py-8 space-y-8'}`}>
           {/* Error Banner se conexão falhar */}
           {error && (
             <div className="flex items-center justify-between p-4 rounded-2xl bg-neutral-100 text-neutral-600 text-sm">

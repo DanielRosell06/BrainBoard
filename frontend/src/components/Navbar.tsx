@@ -265,9 +265,6 @@ export const Navbar: React.FC<NavbarProps> = ({
                   <div key={p.id} className="space-y-1">
                     <button
                       onClick={() => {
-                        if (onSelectProject) onSelectProject(p.id);
-                        if (onSelectView) onSelectView('BOARD');
-                        // Do not close mobile menu yet so they can see the expansion
                         setExpandedProjects((prev) => ({ ...prev, [p.id]: !prev[p.id] }));
                       }}
                       className={`w-full flex items-center justify-between px-4 py-2.5 rounded-xl text-sm transition-all ${
