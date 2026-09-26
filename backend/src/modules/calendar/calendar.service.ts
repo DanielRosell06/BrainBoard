@@ -9,60 +9,35 @@ export class CalendarService {
   async getCalendarEvents(filters?: CalendarFilterOptions): Promise<CalendarEventProjection[]> {
     const aptWhere: any = {};
     const taskWhere: any = { dueDate: { not: null } };
-    const assignmentWhere: any = { dueDate: { not: null } };
+    
 
     if (filters?.startDate) {
       const start = parseIsoDate(filters.startDate, 'startDate');
       aptWhere.startTime = { gte: start };
       taskWhere.dueDate = { ...(taskWhere.dueDate || {}), gte: start };
-      assignmentWhere.dueDate = { ...(assignmentWhere.dueDate || {}), gte: start };
+      
     }
 
     if (filters?.endDate) {
       const end = parseIsoDate(filters.endDate, 'endDate');
       aptWhere.endTime = { lte: end };
       taskWhere.dueDate = { ...(taskWhere.dueDate || {}), lte: end };
-      assignmentWhere.dueDate = { ...(assignmentWhere.dueDate || {}), lte: end };
+      
     }
 
     if (filters?.includeCompleted !== true) {
       aptWhere.isCompleted = false;
       taskWhere.status = { not: 'DONE' };
-      assignmentWhere.status = { not: 'DONE' };
+      
     }
 
     if (filters?.projectId) {
       taskWhere.kanban = { projectId: filters.projectId };
     }
 
-    if (filters?.subjectId) {
-      assignmentWhere.subjectId = filters.subjectId;
-    }
+    
 
-    const [appointments, tasks, assignments] = await Promise.all([
-      prisma.appointment.findMany({
-        where: aptWhere,
-        orderBy: { startTime: 'asc' },
-      }),
-      prisma.task.findMany({
-        where: taskWhere,
-        include: {
-          kanban: {
-            include: {
-              project: true,
-            },
-          },
-        },
-        orderBy: { dueDate: 'asc' },
-      }),
-      prisma.academicAssignment.findMany({
-        where: assignmentWhere,
-        include: {
-          subject: true,
-        },
-        orderBy: { dueDate: 'asc' },
-      }),
-    ]);
+    const [appointments, tasks] = await Promise.all([prisma.appointment.findMany({where: aptWhere, orderBy: {startTime: 'asc'}}), prisma.task.findMany({where: taskWhere, include: {kanban: {include: {project: true}}}, orderBy: {dueDate: 'asc'}})]);
 
     const appointmentEvents: CalendarEventProjection[] = appointments.map((a) => ({
       id: `appointment-${a.id}`,
@@ -100,28 +75,7 @@ export class CalendarService {
       };
     });
 
-    const assignmentEvents: CalendarEventProjection[] = assignments.map((a) => {
-      const dueDateIso = a.dueDate!.toISOString();
-      const isDone = a.status === 'DONE';
-      let color = '#ec4899'; // pink color for academic assignments
-      if (isDone) color = '#10b981';
-
-      return {
-        id: `assignment-${a.id}`,
-        sourceId: a.id,
-        sourceType: 'ACADEMIC_ASSIGNMENT',
-        title: `[${a.subject.title}] ${a.title}`,
-        description: a.description,
-        start: dueDateIso,
-        end: dueDateIso,
-        isCompleted: isDone,
-        color,
-        projectTitle: a.subject.title,
-        status: a.status,
-      };
-    });
-
-    const allEvents = [...appointmentEvents, ...taskEvents, ...assignmentEvents];
+    const allEvents = [...appointmentEvents, ...taskEvents];
     allEvents.sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
     return allEvents;
   }

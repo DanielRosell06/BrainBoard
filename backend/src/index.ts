@@ -10,7 +10,7 @@ import { taskService, VALID_STATUSES } from './services/task.service.js';
 import { subtaskService } from './services/subtask.service.js';
 import { appointmentService } from './modules/calendar/appointment.service.js';
 import { calendarService } from './modules/calendar/calendar.service.js';
-import { academicService } from './modules/academic/academic.service.js';
+
 import {
   createMcpServer,
   mcpServer,
@@ -20,7 +20,7 @@ import {
 } from './modules/mcp/mcp.server.js';
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
 import { projectsRouter } from './modules/projects/projects.router.js';
-import { academicRouter } from './modules/academic/academic.router.js';
+
 import { calendarRouter } from './modules/calendar/calendar.router.js';
 import { chatRouter } from './modules/chat/chat.router.js';
 import { serveDocumentation } from './modules/shared/docs.js';
@@ -36,7 +36,7 @@ export {
   subtaskService,
   appointmentService,
   calendarService,
-  academicService,
+  
   createMcpServer,
   mcpServer,
   sseTransports,
@@ -63,7 +63,7 @@ app.get('/api/health', (req, res) => {
 
 // Domain Routers
 app.use(projectsRouter);
-app.use('/api/academic', academicRouter);
+
 app.use(calendarRouter);
 app.use(chatRouter);
 
@@ -143,7 +143,7 @@ export const CONTRACT_REGISTRY = {
     'get_task',
     'create_appointment',
     'list_upcoming_deadlines',
-    'add_to_sprint',
+    
   ],
   handlers: [
     "name === 'update_business_logic'",
@@ -154,7 +154,7 @@ export const CONTRACT_REGISTRY = {
     "name === 'move_task'",
     "name === 'create_appointment'",
     "name === 'list_upcoming_deadlines'",
-    "name === 'add_to_sprint'",
+    
   ],
   boundaryChecks: {
     titleCheck: (title: any) => !title || !title.trim(),

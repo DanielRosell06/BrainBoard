@@ -13,8 +13,8 @@ import { Navbar } from './components/Navbar';
 import { TopHeader } from './components/TopHeader';
 import { KanbanBoard } from './components/KanbanBoard';
 import { ProjectList } from './components/ProjectList';
-import { SprintKanbanView } from './components/sprint/SprintKanbanView';
-import { AcademicView } from './components/academic/AcademicView';
+
+
 import { CalendarView } from './components/calendar/CalendarView';
 import { CreateTaskModal } from './components/CreateTaskModal';
 import { CreateProjectModal } from './components/CreateProjectModal';
@@ -38,7 +38,7 @@ export const App: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState<string>('');
 
   // Badges counters
-  const [sprintActiveCount, setSprintActiveCount] = useState<number>(0);
+  
   const [calendarCount, setCalendarCount] = useState<number>(0);
 
   // Modals state
@@ -105,13 +105,8 @@ export const App: React.FC = () => {
         await loadActiveProject(currentList[0].id, silent);
       }
 
-    // Sync badge counters in parallel
       try {
-        const [sprintTasks, eventsList] = await Promise.all([
-          tasksApi.listAll({ isSprintActive: true }).catch(() => []),
-          calendarApi.getEvents({ includeCompleted: false }).catch(() => []),
-        ]);
-        setSprintActiveCount(sprintTasks.length);
+        const eventsList = await calendarApi.getEvents({ includeCompleted: false }).catch(() => []);
         setCalendarCount(eventsList.length);
       } catch (e) {
         // Non-blocking for badge updates
@@ -134,7 +129,7 @@ export const App: React.FC = () => {
       }
     });
 
-    tasksApi.listAll({ isSprintActive: true }).then((t) => setSprintActiveCount(t.length)).catch(() => {});
+    
     calendarApi.getEvents({ includeCompleted: false }).then((e) => setCalendarCount(e.length)).catch(() => {});
   }, [loadProjects, activeProjectId, loadActiveProject]);
 
@@ -425,7 +420,7 @@ export const App: React.FC = () => {
           onOpenCreateKanban={() => setIsCreateKanbanModalOpen(true)}
           onOpenCreateNote={() => setIsCreateNoteModalOpen(true)}
           isConnected={isConnected}
-          sprintActiveCount={sprintActiveCount}
+          
           calendarCount={calendarCount}
           activeChatId={activeChatId}
           onSelectChat={(id) => {
@@ -488,12 +483,7 @@ export const App: React.FC = () => {
               searchQuery={searchQuery}
               onDeleteProject={handleDeleteProject}
             />
-          ) : currentView === 'SPRINT' ? (
-            /* Sprint Kanban View */
-            <SprintKanbanView onOpenCreateTask={() => handleOpenCreateTask()} />
-          ) : currentView === 'ACADEMIC' ? (
-            /* Academic View: Subjects & Deadlines */
-            <AcademicView />
+
           ) : currentView === 'CALENDAR' ? (
             /* Calendar & Appointments View */
             <CalendarView onSelectProject={handleSelectProject} />
@@ -514,8 +504,7 @@ export const App: React.FC = () => {
             <div className="flex flex-col items-center justify-center py-32 space-y-3">
               <Loader2 className="w-8 h-8 text-neutral-900 animate-spin" />
             </div>
-          ) : currentView === 'PROJECT_SPRINT' ? (
-            <SprintKanbanView projectId={activeProject!.id} onOpenCreateTask={() => handleOpenCreateTask()} />
+
           ) : currentView === 'NOTE' ? (
             /* Active Project Note View */
             <div className="bg-white rounded-2xl shadow-sm border border-neutral-200 p-8 min-h-[600px]">

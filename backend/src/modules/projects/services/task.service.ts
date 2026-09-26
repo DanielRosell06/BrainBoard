@@ -33,7 +33,7 @@ export class TaskService {
     }
 
     if (filters?.isSprintActive !== undefined) {
-      where.isSprintActive = Boolean(filters.isSprintActive);
+      
     }
 
     if (filters?.hasDueDate === true) {
@@ -94,7 +94,7 @@ export class TaskService {
       dueDate = parsed;
     }
 
-    const isSprintActive = data.isSprintActive !== undefined ? Boolean(data.isSprintActive) : false;
+    
 
     return await prisma.task.create({
       data: {
@@ -106,7 +106,7 @@ export class TaskService {
             : null,
         status,
         dueDate,
-        isSprintActive,
+        
       },
       include: { subtasks: true, kanban: true },
     });
@@ -123,7 +123,7 @@ export class TaskService {
       description?: string | null;
       kanbanId?: string;
       dueDate?: Date | null;
-      isSprintActive?: boolean;
+      
     } = {};
 
     if (data.status !== undefined) {
@@ -174,7 +174,7 @@ export class TaskService {
     }
 
     if (data.isSprintActive !== undefined) {
-      updateData.isSprintActive = Boolean(data.isSprintActive);
+      
     }
 
     try {

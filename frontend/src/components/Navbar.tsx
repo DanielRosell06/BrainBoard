@@ -8,7 +8,7 @@ import {
   Menu,
   X,
   Flame,
-  LayoutGrid,
+  
   MessageSquare,
   ChevronRight,
   ChevronDown,
@@ -130,26 +130,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             </span>
           </button>
 
-          {/* 2. Kanban Board View Button */}
-          <button
-            onClick={() => {
-              if (onSelectView) onSelectView('BOARD');
-              setIsMobileMenuOpen(false);
-            }}
-            className={`w-full flex items-center justify-between px-4 py-2.5 rounded-xl text-sm transition-colors ${
-              currentView === 'BOARD'
-                ? 'bg-neutral-200/50 text-neutral-900 font-medium'
-                : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-200/30'
-            }`}
-          >
-            <div className="flex items-center gap-3">
-              <LayoutGrid className="w-4 h-4 text-neutral-900" />
-              <span>Quadro</span>
-            </div>
-            {activeProjectId && (
-              <span className="w-1.5 h-1.5 rounded-full bg-neutral-900" />
-            )}
-          </button>
+
 
           {/* 3. Visão Global View Button */}
           <button
@@ -215,30 +196,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             )}
           </button>
 
-          {/* 6. Assistente IA View Button */}
-          <button
-            onClick={() => {
-              if (onSelectView) onSelectView('CHAT');
-              // Se tiver conversas, seleciona a primeira, senão cria uma nova.
-              if (conversations.length > 0) {
-                if (onSelectChat && !activeChatId) onSelectChat(conversations[0].id);
-              } else {
-                handleCreateChat();
-              }
-              setIsMobileMenuOpen(false);
-            }}
-            className={`w-full flex items-center justify-between px-4 py-2.5 rounded-xl text-sm transition-colors ${
-              currentView === 'CHAT'
-                ? 'bg-neutral-200/50 text-neutral-900 font-medium'
-                : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-200/30'
-            }`}
-          >
-            <div className="flex items-center gap-3">
-              <MessageSquare className="w-4 h-4 text-neutral-900" />
-              <span>Assistente</span>
-            </div>
-          </button>
-        </div>
+                  </div>
 
         {/* Project Switcher List */}
         {projects.length > 0 && (
@@ -465,3 +423,7 @@ export const Navbar: React.FC<NavbarProps> = ({
     </>
   );
 };
+
+
+
+
