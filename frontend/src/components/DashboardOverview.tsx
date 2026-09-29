@@ -14,7 +14,7 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({ tasks }) =
   const completionRate = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
 
   return (
-    <div className="flex items-center gap-8 py-2 px-4 bg-transparent">
+    <div className="flex items-center gap-6 sm:gap-8 py-2 px-4 bg-transparent flex-wrap min-w-0 max-w-full">
       <div className="flex flex-col">
         <span className="text-[12px] font-medium text-neutral-500">Total</span>
         <span className="text-xl font-semibold text-neutral-900">{totalTasks}</span>

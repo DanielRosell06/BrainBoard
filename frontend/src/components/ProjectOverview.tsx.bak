@@ -1,0 +1,146 @@
+import React from 'react';
+import type { Project } from '../types';
+import { FolderKanban, FileText, ArrowRight } from 'lucide-react';
+
+interface ProjectOverviewProps {
+  project: Project;
+  onSelectKanban: (kanbanId: string) => void;
+  onSelectNote: (noteId: string) => void;
+  onOpenCreateKanban: () => void;
+  onOpenCreateNote: () => void;
+}
+
+export const ProjectOverview: React.FC<ProjectOverviewProps> = ({
+  project,
+  onSelectKanban,
+  onSelectNote,
+  onOpenCreateKanban,
+  onOpenCreateNote
+}) => {
+  return (
+    <div className="space-y-8 animate-in fade-in duration-300">
+      {/* Header Info */}
+      <div className="bg-white p-6 rounded-2xl border border-neutral-200 shadow-sm">
+        <h2 className="text-2xl font-bold text-neutral-900 mb-2">{project.title}</h2>
+        {project.description ? (
+          <p className="text-neutral-600 text-sm whitespace-pre-wrap">{project.description}</p>
+        ) : (
+          <p className="text-neutral-400 text-sm italic">Sem descrição</p>
+        )}
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {/* Kanbans Section */}
+        <section className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-lg font-semibold text-neutral-900">
+              <FolderKanban className="w-5 h-5 text-neutral-500" />
+              <h3>Quadros Kanban</h3>
+            </div>
+            <button
+              onClick={onOpenCreateKanban}
+              className="text-sm font-medium text-neutral-600 hover:text-neutral-900 px-3 py-1.5 rounded-lg hover:bg-neutral-100 transition-colors border border-transparent hover:border-neutral-200"
+            >
+              + Novo
+            </button>
+          </div>
+
+          {project.kanbans && project.kanbans.length > 0 ? (
+            <div className="grid gap-4">
+              {project.kanbans.map(kanban => {
+                const totalTasks = kanban.tasks?.length || 0;
+                
+                return (
+                  <div 
+                    key={kanban.id}
+                    onClick={() => onSelectKanban(kanban.id)}
+                    className="bg-white p-5 rounded-2xl border border-neutral-200 shadow-sm hover:shadow-md hover:border-neutral-300 transition-all cursor-pointer group"
+                  >
+                    <div className="flex items-start justify-between mb-4">
+                      <div>
+                        <h4 className="font-semibold text-neutral-900 group-hover:text-neutral-700 transition-colors">
+                          {kanban.title}
+                        </h4>
+                        <p className="text-xs text-neutral-500 mt-0.5">{totalTasks} tarefas no total</p>
+                      </div>
+                      <div className="w-8 h-8 rounded-full bg-neutral-50 flex items-center justify-center group-hover:bg-neutral-100 transition-colors">
+                        <ArrowRight className="w-4 h-4 text-neutral-400 group-hover:text-neutral-600 transition-colors" />
+                      </div>
+                    </div>
+                    
+                    <div className="flex gap-2 overflow-x-auto pb-1 hide-scrollbar">
+                      {kanban.columns?.map(col => {
+                        const count = kanban.tasks?.filter(t => t.columnId === col.id).length || 0;
+                        return (
+                          <div key={col.id} className="flex flex-col flex-shrink-0 items-center justify-center p-3 w-[88px] bg-neutral-50 rounded-xl border border-neutral-100">
+                            <span className="text-xl font-bold text-neutral-700">{count}</span>
+                            <span className="text-[10px] text-neutral-500 uppercase tracking-wider font-semibold truncate max-w-[70px] mt-1" title={col.title}>
+                              {col.title}
+                            </span>
+                          </div>
+                        );
+                      })}
+                      {(kanban.tasks?.filter(t => !t.columnId).length || 0) > 0 && (
+                        <div className="flex flex-col flex-shrink-0 items-center justify-center p-3 w-[88px] bg-amber-50 rounded-xl border border-amber-100">
+                          <span className="text-xl font-bold text-amber-700">{kanban.tasks.filter(t => !t.columnId).length}</span>
+                          <span className="text-[10px] text-amber-600 uppercase tracking-wider font-semibold mt-1">Legado</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="p-8 text-center bg-white rounded-2xl border border-neutral-200 border-dashed">
+              <p className="text-neutral-500 text-sm">Nenhum quadro kanban.</p>
+            </div>
+          )}
+        </section>
+
+        {/* Notes Section */}
+        <section className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-lg font-semibold text-neutral-900">
+              <FileText className="w-5 h-5 text-neutral-500" />
+              <h3>Notas e Doc</h3>
+            </div>
+            <button
+              onClick={onOpenCreateNote}
+              className="text-sm font-medium text-neutral-600 hover:text-neutral-900 px-3 py-1.5 rounded-lg hover:bg-neutral-100 transition-colors border border-transparent hover:border-neutral-200"
+            >
+              + Nova
+            </button>
+          </div>
+
+          {project.notes && project.notes.length > 0 ? (
+            <div className="grid gap-4">
+              {project.notes.map(note => (
+                <div
+                  key={note.id}
+                  onClick={() => onSelectNote(note.id)}
+                  className="bg-white p-5 rounded-2xl border border-neutral-200 shadow-sm hover:shadow-md hover:border-neutral-300 transition-all cursor-pointer group flex flex-col h-[148px]"
+                >
+                  <div className="flex items-start justify-between mb-2">
+                    <h4 className="font-semibold text-neutral-900 group-hover:text-neutral-700 transition-colors line-clamp-1">
+                      {note.title}
+                    </h4>
+                  </div>
+                  <div className="text-sm text-neutral-500 line-clamp-3 overflow-hidden flex-1 relative leading-relaxed">
+                     {/* basic strip html tags to preview */}
+                    {note.content.replace(/<[^>]*>?/gm, ' ')}
+                    <div className="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-white to-transparent" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="p-8 text-center bg-white rounded-2xl border border-neutral-200 border-dashed">
+              <p className="text-neutral-500 text-sm">Nenhuma nota.</p>
+            </div>
+          )}
+        </section>
+      </div>
+    </div>
+  );
+};

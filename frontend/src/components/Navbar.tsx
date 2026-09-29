@@ -1,13 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Brain,
   Plus,
   FolderKanban,
-  GraduationCap,
+  
   Calendar,
   Menu,
   X,
-  Flame,
+  
   
   MessageSquare,
   ChevronRight,
@@ -31,7 +31,7 @@ export interface NavbarProps {
   isConnected?: boolean;
   selectedCategory?: string;
   onSelectCategory?: (category: string) => void;
-  sprintActiveCount?: number;
+  
   calendarCount?: number;
   activeChatId?: string | null;
   onSelectChat?: (id: string) => void;
@@ -59,7 +59,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenCreateKanban,
   onOpenCreateNote,
   isConnected = true,
-  sprintActiveCount = 0,
+  
   calendarCount = 0,
   activeChatId = null,
   onSelectChat,
@@ -72,11 +72,23 @@ export const Navbar: React.FC<NavbarProps> = ({
   const [conversations, setConversations] = useState<ChatConversation[]>([]);
   const [expandedProjects, setExpandedProjects] = useState<Record<string, boolean>>({});
 
-  useEffect(() => {
+  const loadConversations = useCallback(() => {
     chatApi.listConversations()
       .then(setConversations)
       .catch(console.error);
-  }, [activeChatId]); // Refetch when chat changes
+  }, []);
+
+  useEffect(() => {
+    loadConversations();
+  }, [activeChatId, loadConversations]); // Refetch when chat changes
+
+  useEffect(() => {
+    const handleTitleUpdated = () => {
+      loadConversations();
+    };
+    window.addEventListener('chat-title-updated', handleTitleUpdated);
+    return () => window.removeEventListener('chat-title-updated', handleTitleUpdated);
+  }, [loadConversations]);
 
   const handleCreateChat = async () => {
     try {
@@ -131,49 +143,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           </button>
 
 
-
-          {/* 3. Visão Global View Button */}
-          <button
-            onClick={() => {
-              if (onSelectView) onSelectView('SPRINT');
-              setIsMobileMenuOpen(false);
-            }}
-            className={`w-full flex items-center justify-between px-4 py-2.5 rounded-xl text-sm transition-colors ${
-              currentView === 'SPRINT'
-                ? 'bg-neutral-200/50 text-neutral-900 font-medium'
-                : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-200/30'
-            }`}
-          >
-            <div className="flex items-center gap-3">
-              <Flame className="w-4 h-4 text-neutral-900" />
-              <span>Sprint</span>
-            </div>
-            {sprintActiveCount > 0 && (
-              <span className="text-[12px] font-medium text-neutral-500">
-                {sprintActiveCount}
-              </span>
-            )}
-          </button>
-
-          {/* 4. Área Acadêmica View Button */}
-          <button
-            onClick={() => {
-              if (onSelectView) onSelectView('ACADEMIC');
-              setIsMobileMenuOpen(false);
-            }}
-            className={`w-full flex items-center justify-between px-4 py-2.5 rounded-xl text-sm transition-colors ${
-              currentView === 'ACADEMIC'
-                ? 'bg-neutral-200/50 text-neutral-900 font-medium'
-                : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-200/30'
-            }`}
-          >
-            <div className="flex items-center gap-3">
-              <GraduationCap className="w-4 h-4 text-neutral-900" />
-              <span>Acadêmico</span>
-            </div>
-          </button>
-
-          {/* 5. Calendário View Button */}
+          {/* Calendário View Button */}
           <button
             onClick={() => {
               if (onSelectView) onSelectView('CALENDAR');
@@ -242,8 +212,21 @@ export const Navbar: React.FC<NavbarProps> = ({
                     </button>
                     {isExpanded && (
                       <div className="pl-11 pr-4 space-y-1 pb-2">
+                        <button
+                          onClick={() => {
+                            if (onSelectProject) onSelectProject(p.id);
+                            if (onSelectView) onSelectView('PROJECT_OVERVIEW');
+                            setIsMobileMenuOpen(false);
+                          }}
+                          className={`w-full flex items-center gap-2 py-1.5 text-xs transition-colors text-left truncate ${
+                            isActive && currentView === 'PROJECT_OVERVIEW' ? 'text-neutral-900 font-medium' : 'text-neutral-500 hover:text-neutral-900'
+                          }`}
+                        >
+                          <FolderKanban className="w-3.5 h-3.5 shrink-0" />
+                          <span className="truncate">Visão Geral</span>
+                        </button>
                         {p.kanbans && p.kanbans.length > 0 && p.kanbans.map((k) => {
-                          const isKActive = activeKanbanId === k.id;
+                          const isKActive = activeKanbanId === k.id && currentView === 'BOARD';
                           return (
                             <button
                               key={k.id}
@@ -263,7 +246,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                           );
                         })}
                         {p.notes && p.notes.length > 0 && p.notes.map((n) => {
-                          const isNActive = activeNoteId === n.id;
+                          const isNActive = activeNoteId === n.id && currentView === 'NOTE';
                           return (
                             <button
                               key={n.id}

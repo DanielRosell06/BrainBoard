@@ -40,9 +40,11 @@ export class ProjectService {
         kanbans: {
           orderBy: { createdAt: 'asc' },
           include: {
+            columns: { orderBy: { order: 'asc' } },
+            tags: true,
             tasks: {
               orderBy: { createdAt: 'asc' },
-              include: { subtasks: { orderBy: { createdAt: 'asc' } } },
+              include: { subtasks: { orderBy: { createdAt: 'asc' } }, tags: true, column: true },
             },
           },
         },
@@ -71,9 +73,11 @@ export class ProjectService {
         kanbans: {
           orderBy: { createdAt: 'asc' },
           include: {
+            columns: { orderBy: { order: 'asc' } },
+            tags: true,
             tasks: {
               orderBy: { createdAt: 'asc' },
-              include: { subtasks: { orderBy: { createdAt: 'asc' } } },
+              include: { subtasks: { orderBy: { createdAt: 'asc' } }, tags: true, column: true },
             },
           },
         },
@@ -146,8 +150,11 @@ export class ProjectService {
         kanbans: {
           orderBy: { createdAt: 'asc' },
           include: {
+            columns: { orderBy: { order: 'asc' } },
+            tags: true,
             tasks: {
-              include: { subtasks: true },
+              orderBy: { createdAt: 'asc' },
+              include: { subtasks: { orderBy: { createdAt: 'asc' } }, tags: true, column: true },
             },
           },
         },

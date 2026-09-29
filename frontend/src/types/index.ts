@@ -4,52 +4,23 @@
 
 export type ProjectStatus = 'PLANNING' | 'ACTIVE' | 'COMPLETED';
 export type StageStatus = 'PLANNING' | 'IN_PROGRESS' | 'COMPLETED';
-export type TaskStatus = 'TODO' | 'IN_PROGRESS' | 'DONE';
+export type TaskStatus = string;
 export type ProjectType = 'SOFTWARE';
-export type SprintStatus = 'ACTIVE' | 'COMPLETED' | 'PLANNING';
-export type ActiveView = 'PROJECTS' | 'BOARD' | 'NOTE' | 'SPRINT' | 'PROJECT_SPRINT' | 'ACADEMIC' | 'CALENDAR' | 'CHAT';
+export type ActiveView = 'PROJECTS' | 'PROJECT_OVERVIEW' | 'BOARD' | 'NOTE' | 'CALENDAR' | 'CHAT';
 
-export type AssignmentType = 'EXAM' | 'HOMEWORK' | 'PROJECT' | 'PRESENTATION' | 'READING' | 'OTHER';
-export type AssignmentStatus = 'TODO' | 'IN_PROGRESS' | 'DONE';
-
-export interface AcademicAssignment {
+// ---- Kanban Column & Tag -----------------------------------
+export interface KanbanColumn {
   id: string;
   title: string;
-  description: string | null;
-  dueDate: string | null;
-  type: AssignmentType;
-  status: AssignmentStatus;
-  grade: number | null;
-  subjectId: string;
-  subject?: AcademicSubject;
-  createdAt: string;
-  updatedAt: string;
+  order: number;
+  kanbanId: string;
 }
 
-export interface AcademicSubject {
+export interface KanbanTag {
   id: string;
-  title: string;
-  description: string | null;
-  professor: string | null;
-  colorCode: string | null;
-  assignments?: AcademicAssignment[];
-  createdAt: string;
-  updatedAt: string;
-}
-
-
-// ---- Sprint ------------------------------------------------
-export interface Sprint {
-  id: string;
-  title: string;
-  goal: string | null;
-  startDate: string | null;
-  endDate: string | null;
-  status: SprintStatus;
-  projectId: string;
-  tasks?: Task[];
-  createdAt: string;
-  updatedAt: string;
+  name: string;
+  color: string;
+  kanbanId: string;
 }
 
 // ---- Subtask -----------------------------------------------
@@ -67,10 +38,12 @@ export interface Task {
   id: string;
   title: string;
   description: string | null;
-  status: TaskStatus;
+  status: string;
   kanbanId: string;
+  columnId: string | null;
+  column?: KanbanColumn | null;
+  tags?: KanbanTag[];
   dueDate?: string | null;
-  isSprintActive?: boolean | null;
   subtasks: Subtask[];
   kanban?: Kanban;
   createdAt: string;
@@ -83,6 +56,8 @@ export interface Kanban {
   title: string;
   projectId: string;
   tasks: Task[];
+  columns: KanbanColumn[];
+  tags: KanbanTag[];
   createdAt: string;
   updatedAt: string;
 }
@@ -131,7 +106,6 @@ export interface Project {
   settings: Record<string, unknown> | null;
   kanbans: Kanban[];
   notes: Note[];
-  sprints: Sprint[];
   updateLogs: UpdateLog[];
   members: Member[];
   createdAt: string;
@@ -182,21 +156,24 @@ export interface CreateTaskInput {
   title: string;
   description?: string;
   status?: TaskStatus;
+  columnId?: string;
+  tagIds?: string[];
   dueDate?: string | null;
-  isSprintActive?: boolean;
 }
 
 export interface UpdateTaskInput {
   title?: string;
   description?: string | null;
   status?: TaskStatus;
+  columnId?: string | null;
+  tagIds?: string[];
   kanbanId?: string;
   dueDate?: string | null;
-  isSprintActive?: boolean;
 }
 
 export interface UpdateTaskStatusInput {
-  status: TaskStatus;
+  status?: TaskStatus;
+  columnId?: string | null;
 }
 
 export interface CreateMemberInput {
@@ -259,32 +236,6 @@ export interface CalendarEventProjection {
   status?: string;
 }
 
-// ---- Academic UI Types -------------------------------------
-export interface CreateAcademicSubjectInput {
-  title: string;
-  description?: string;
-  professor?: string;
-  colorCode?: string;
-}
-
-export interface CreateAcademicAssignmentInput {
-  title: string;
-  description?: string;
-  dueDate?: string;
-  type?: AssignmentType;
-  status?: AssignmentStatus;
-  grade?: number;
-  subjectId: string;
-}
-
-export interface UpdateAcademicAssignmentInput {
-  title?: string;
-  description?: string;
-  dueDate?: string;
-  type?: AssignmentType;
-  status?: AssignmentStatus;
-  grade?: number;
-}
 
 // ---- UI helpers --------------------------------------------
 export const PROJECT_STATUS_LABELS: Record<ProjectStatus, string> = {

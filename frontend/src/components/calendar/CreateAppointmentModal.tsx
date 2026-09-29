@@ -99,22 +99,22 @@ export const CreateAppointmentModal: React.FC<CreateAppointmentModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/35 backdrop-blur-xs animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
       <div
-        className="relative w-full max-w-lg bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden animate-in zoom-in-95 duration-200"
+        className="relative w-full max-w-lg bg-white border border-slate-200 rounded-2xl shadow-xl overflow-hidden animate-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4.5 border-b border-slate-200 bg-white">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-slate-100 text-slate-900 flex items-center justify-center">
-              <Calendar className="w-4 h-4" />
+        <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 bg-white">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-900 flex items-center justify-center">
+              <Calendar className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base font-extrabold text-slate-900 leading-tight">
+              <h2 className="text-lg font-bold text-slate-900 leading-tight">
                 Novo Compromisso
               </h2>
-              <p className="text-[11px] text-slate-400">
+              <p className="text-sm text-slate-500 mt-0.5">
                 Agende reuniões, eventos ou sessões de estudo
               </p>
             </div>
@@ -122,23 +122,23 @@ export const CreateAppointmentModal: React.FC<CreateAppointmentModalProps> = ({
           <button
             onClick={onClose}
             aria-label="Fechar"
-            className="text-slate-400 hover:text-slate-700 p-1.5 rounded-xl hover:bg-slate-100 transition-colors"
+            className="text-slate-400 hover:text-slate-700 p-2 rounded-xl hover:bg-slate-100 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Form Body */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="p-6 space-y-5">
           {errorMessage && (
-            <div className="p-3 text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-xl font-medium">
+            <div className="p-3 text-sm text-rose-700 bg-rose-50 border border-rose-200 rounded-xl font-medium">
               {errorMessage}
             </div>
           )}
 
           {/* Title Field */}
-          <div className="space-y-1.5">
-            <label htmlFor="apt-title" className="block text-xs font-bold text-slate-700">
+          <div className="space-y-2">
+            <label htmlFor="apt-title" className="block text-sm font-semibold text-slate-700">
               Título do Compromisso <span className="text-rose-500">*</span>
             </label>
             <input
@@ -149,15 +149,15 @@ export const CreateAppointmentModal: React.FC<CreateAppointmentModalProps> = ({
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Ex: Daily Scrum, Alinhamento de TCC, Reunião com Cliente..."
               autoFocus
-              className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:bg-white focus:border-slate-800 focus:ring-2 focus:ring-slate-200 focus:outline-none transition-all"
+              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-base text-slate-900 placeholder-slate-400 focus:bg-white focus:border-slate-900 focus:ring-2 focus:ring-slate-200 focus:outline-none transition-all"
             />
           </div>
 
           {/* Time Fields */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <label htmlFor="apt-start" className="block text-xs font-bold text-slate-700 flex items-center gap-1">
-                <Clock className="w-3.5 h-3.5 text-slate-800" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label htmlFor="apt-start" className="block text-sm font-semibold text-slate-700 flex items-center gap-1.5">
+                <Clock className="w-4 h-4 text-slate-500" />
                 <span>Início <span className="text-rose-500">*</span></span>
               </label>
               <input
@@ -166,13 +166,13 @@ export const CreateAppointmentModal: React.FC<CreateAppointmentModalProps> = ({
                 type="datetime-local"
                 value={startTime}
                 onChange={(e) => setStartTime(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:bg-white focus:border-slate-800 focus:ring-2 focus:ring-slate-200 focus:outline-none transition-all"
+                className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:bg-white focus:border-slate-900 focus:ring-2 focus:ring-slate-200 focus:outline-none transition-all"
               />
             </div>
 
-            <div className="space-y-1.5">
-              <label htmlFor="apt-end" className="block text-xs font-bold text-slate-700 flex items-center gap-1">
-                <Clock className="w-3.5 h-3.5 text-slate-800" />
+            <div className="space-y-2">
+              <label htmlFor="apt-end" className="block text-sm font-semibold text-slate-700 flex items-center gap-1.5">
+                <Clock className="w-4 h-4 text-slate-500" />
                 <span>Término <span className="text-rose-500">*</span></span>
               </label>
               <input
@@ -181,15 +181,15 @@ export const CreateAppointmentModal: React.FC<CreateAppointmentModalProps> = ({
                 type="datetime-local"
                 value={endTime}
                 onChange={(e) => setEndTime(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:bg-white focus:border-slate-800 focus:ring-2 focus:ring-slate-200 focus:outline-none transition-all"
+                className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:bg-white focus:border-slate-900 focus:ring-2 focus:ring-slate-200 focus:outline-none transition-all"
               />
             </div>
           </div>
 
           {/* Location or Link */}
-          <div className="space-y-1.5">
-            <label htmlFor="apt-location" className="block text-xs font-bold text-slate-700 flex items-center gap-1">
-              <MapPin className="w-3.5 h-3.5 text-slate-400" />
+          <div className="space-y-2">
+            <label htmlFor="apt-location" className="block text-sm font-semibold text-slate-700 flex items-center gap-1.5">
+              <MapPin className="w-4 h-4 text-slate-500" />
               <span>Local ou Link de Reunião <span className="text-slate-400 font-normal">(Opcional)</span></span>
             </label>
             <input
@@ -199,13 +199,13 @@ export const CreateAppointmentModal: React.FC<CreateAppointmentModalProps> = ({
               value={locationOrLink}
               onChange={(e) => setLocationOrLink(e.target.value)}
               placeholder="Ex: Google Meet, Zoom, Sala 302, Laboratório B..."
-              className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:bg-white focus:border-slate-800 focus:ring-2 focus:ring-slate-200 focus:outline-none transition-all"
+              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:bg-white focus:border-slate-900 focus:ring-2 focus:ring-slate-200 focus:outline-none transition-all"
             />
           </div>
 
           {/* Description Field */}
-          <div className="space-y-1.5">
-            <label htmlFor="apt-desc" className="block text-xs font-bold text-slate-700">
+          <div className="space-y-2">
+            <label htmlFor="apt-desc" className="block text-sm font-semibold text-slate-700">
               Descrição / Notas <span className="text-slate-400 font-normal">(Opcional)</span>
             </label>
             <textarea
@@ -215,27 +215,27 @@ export const CreateAppointmentModal: React.FC<CreateAppointmentModalProps> = ({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Pauta da reunião, links de documentos, preparação prévia..."
-              className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:border-slate-800 focus:ring-2 focus:ring-slate-200 focus:outline-none transition-all resize-none"
+              className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder-slate-400 focus:bg-white focus:border-slate-900 focus:ring-2 focus:ring-slate-200 focus:outline-none transition-all resize-none"
             />
           </div>
 
           {/* Actions */}
-          <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-200">
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2.5 text-xs font-semibold text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition-colors"
+              className="px-5 py-2.5 text-sm font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-xl transition-colors"
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={isSubmitting || !title.trim() || !startTime || !endTime}
-              className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white text-xs font-bold rounded-xl shadow-sm transition-all flex items-center gap-2"
+              className="px-6 py-2.5 bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white text-sm font-semibold rounded-xl shadow-sm transition-all flex items-center gap-2"
             >
               {isSubmitting ? (
                 <>
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  <Loader2 className="w-4 h-4 animate-spin" />
                   <span>Agendando...</span>
                 </>
               ) : (

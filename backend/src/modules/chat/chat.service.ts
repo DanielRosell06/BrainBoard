@@ -241,7 +241,24 @@ export const chatService = {
   },
 
   async processMessage(conversationId: string, userContent: string) {
-    logInfo('MSG', `Processing message for conversation ${conversationId}`, { contentPreview: userContent.slice(0, 80) });
+    // keeping processMessage just in case, but we will use processMessageStream
+    // Actually, I can just replace processMessage or keep both. Let's keep it as is and add processMessageStream below.
+  },
+
+  async processMessageStream(conversationId: string, userContent: string, res: any) {
+    logInfo('MSG', `Processing stream message for conversation ${conversationId}`, { contentPreview: userContent.slice(0, 80) });
+
+    // Set SSE headers
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    // Ensure the client receives the headers immediately
+    res.flushHeaders?.();
+
+    const sendEvent = (event: string, data: any) => {
+      res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+      (res as any).flush?.();
+    };
 
     // 1. Save user message
     await prisma.chatMessage.create({
@@ -258,7 +275,6 @@ export const chatService = {
     });
     logInfo('MSG', `History loaded: ${history.length} messages`);
 
-    // If this is the very first message, generate a title asynchronously
     if (history.length === 1) {
       logInfo('MSG', 'First message detected, generating title in background...');
       const titlePrompt = `Gere um título bem curto (máximo 4 palavras) para uma conversa baseada nesta mensagem: "${userContent}". Retorne APENAS o título, sem aspas.`;
@@ -273,6 +289,7 @@ export const chatService = {
             data: { title: newTitle }
           });
           logInfo('TITLE', `Conversation title updated to: ${newTitle}`);
+          sendEvent('title', newTitle);
         })
         .catch(e => logError('TITLE', 'Failed to generate title', e));
     }
@@ -287,76 +304,102 @@ export const chatService = {
       'Você ajuda a gerenciar projetos, etapas (stages) e tarefas Kanban. ' +
       'Responda sempre em português. Use markdown para formatar respostas.';
 
-    try {
-      // 3. First Gemini call
-      const { response } = await generateWithFallback(contents, systemInstruction);
-
-      // 4. Handle function calls
-      if (response.functionCalls && response.functionCalls.length > 0) {
-        const call = response.functionCalls[0];
-        logInfo('FUNC_CALL', `Function called: ${call.name}`, call.args);
-
-        const fn = toolImplementations[call.name];
-        let functionResult: any;
-
-        if (fn) {
+    const runStream = async (contentsToRun: any[]) => {
+       let error;
+       for (const model of MODEL_PRIORITY) {
           try {
-            functionResult = await fn(call.args);
-            logInfo('FUNC_CALL', `Function ${call.name} returned successfully`);
-          } catch (e: any) {
-            logError('FUNC_CALL', `Function ${call.name} threw an error`, e);
-            functionResult = { error: e.message };
+             logInfo('GEMINI', `Trying stream model: ${model}`);
+             const stream = await ai.models.generateContentStream({
+                model,
+                contents: contentsToRun,
+                config: {
+                   systemInstruction,
+                   tools: [{ functionDeclarations: toolDefinitions as any }],
+                }
+             });
+             return stream;
+          } catch(e) {
+             error = e;
+             logError('GEMINI', `Model ${model} stream failed`, e);
           }
-        } else {
-          logError('FUNC_CALL', `Unknown function: ${call.name}`);
-          functionResult = { error: `Função desconhecida: ${call.name}` };
-        }
+       }
+       throw error;
+    };
 
-        const modelContent = response.candidates?.[0]?.content || {
-          role: 'model',
-          parts: [{ functionCall: { name: call.name, args: call.args } }]
-        };
+    try {
+       let stream = await runStream(contents);
+       let fullText = '';
+       let functionCallObj: any = null;
 
-        const followUpContents = [
-          ...contents,
-          modelContent,
-          { role: 'user', parts: [{ functionResponse: { name: call.name, response: { result: functionResult } } }] },
-        ];
+       for await (const chunk of stream) {
+          if (chunk.functionCalls && chunk.functionCalls.length > 0) {
+             functionCallObj = chunk.functionCalls[0];
+          }
+          if (chunk.text) {
+             fullText += chunk.text;
+             sendEvent('chunk', chunk.text);
+          }
+       }
 
-        const { response: finalResponse } = await generateWithFallback(followUpContents, systemInstruction);
-        const responseText = finalResponse.text || 'Operação concluída.';
-        logInfo('MSG', `Assistant response (after func call): ${responseText.slice(0, 100)}...`);
+       if (functionCallObj) {
+          logInfo('FUNC_CALL', `Function called: ${functionCallObj.name}`);
+          
+          const fn = toolImplementations[functionCallObj.name];
+          let functionResult: any;
+          if (fn) {
+             try {
+                functionResult = await fn(functionCallObj.args);
+             } catch (e: any) {
+                functionResult = { error: e.message };
+             }
+          } else {
+             functionResult = { error: `Função desconhecida: ${functionCallObj.name}` };
+          }
 
-        return prisma.chatMessage.create({
-          data: { role: 'assistant', content: responseText, conversationId },
-        });
-      }
+          const followUpContents = [
+             ...contents,
+             { role: 'model', parts: [{ functionCall: { name: functionCallObj.name, args: functionCallObj.args } }] },
+             { role: 'user', parts: [{ functionResponse: { name: functionCallObj.name, response: { result: functionResult } } }] },
+          ];
 
-      // 5. Direct text response
-      const responseText = response.text || 'Não entendi. Pode reformular?';
-      logInfo('MSG', `Assistant response: ${responseText.slice(0, 100)}...`);
+          stream = await runStream(followUpContents);
+                    
+          for await (const chunk of stream) {
+             if (chunk.text) {
+                fullText += chunk.text;
+                sendEvent('chunk', chunk.text);
+             }
+          }
+       }
 
-      return prisma.chatMessage.create({
-        data: { role: 'assistant', content: responseText, conversationId },
-      });
+       const responseText = fullText || 'Operação concluída.';
+       const savedMessage = await prisma.chatMessage.create({
+          data: { role: 'assistant', content: responseText, conversationId }
+       });
+
+       sendEvent('done', savedMessage);
+       res.end();
 
     } catch (error: any) {
-      logError('MSG', 'Gemini API call failed after all retries/fallbacks', error);
+       logError('MSG', 'Gemini API call failed after all retries/fallbacks', error);
 
-      let userMessage: string;
-      if (error?.status === 503 || error?.status === 429) {
-        userMessage = '⚠️ **Serviço temporariamente sobrecarregado.** Aguarde alguns segundos e tente novamente.';
-      } else if (error?.status === 401 || error?.status === 403) {
-        userMessage = '❌ **Erro de autenticação.** A chave `GEMINI_API_KEY` parece inválida ou expirada.';
-      } else if (error?.status === 404) {
-        userMessage = `❌ **Modelo não disponível.** Detalhe: ${error.message}`;
-      } else {
-        userMessage = `❌ **Erro inesperado** (status ${error?.status ?? 'N/A'}): ${error?.message ?? 'Sem detalhes. Veja os logs do backend para mais informações.'}`;
-      }
+       let userMessage: string;
+       if (error?.status === 503 || error?.status === 429) {
+         userMessage = '⚠️ **Serviço temporariamente sobrecarregado.** Aguarde alguns segundos e tente novamente.';
+       } else if (error?.status === 401 || error?.status === 403) {
+         userMessage = '❌ **Erro de autenticação.** A chave `GEMINI_API_KEY` parece inválida ou expirada.';
+       } else if (error?.status === 404) {
+         userMessage = `❌ **Modelo não disponível.** Detalhe: ${error.message}`;
+       } else {
+         userMessage = `❌ **Erro inesperado** (status ${error?.status ?? 'N/A'}): ${error?.message ?? 'Sem detalhes. Veja os logs do backend para mais informações.'}`;
+       }
 
-      return prisma.chatMessage.create({
-        data: { role: 'assistant', content: userMessage, conversationId },
-      });
+       const savedMessage = await prisma.chatMessage.create({
+         data: { role: 'assistant', content: userMessage, conversationId },
+       });
+
+       sendEvent('done', savedMessage);
+       res.end();
     }
   },
 };

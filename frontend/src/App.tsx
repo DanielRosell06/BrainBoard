@@ -4,7 +4,7 @@ import type {
   Project,
   ProjectSummary,
   Task,
-  TaskStatus,
+  Subtask,
   ActiveView,
   CreateProjectInput,
   CreateTaskInput,
@@ -13,8 +13,7 @@ import { Navbar } from './components/Navbar';
 import { TopHeader } from './components/TopHeader';
 import { KanbanBoard } from './components/KanbanBoard';
 import { ProjectList } from './components/ProjectList';
-
-
+import { ProjectOverview } from './components/ProjectOverview';
 import { CalendarView } from './components/calendar/CalendarView';
 import { CreateTaskModal } from './components/CreateTaskModal';
 import { CreateProjectModal } from './components/CreateProjectModal';
@@ -22,6 +21,7 @@ import { CreateKanbanModal } from './components/CreateKanbanModal';
 import { CreateNoteModal } from './components/CreateNoteModal';
 import { CreateAppointmentModal } from './components/calendar/CreateAppointmentModal';
 import { ChatView } from './components/chat/ChatView';
+import { NoteEditorView } from './components/notes/NoteEditorView';
 import { Loader2, RefreshCw, AlertCircle } from 'lucide-react';
 
 export const App: React.FC = () => {
@@ -165,20 +165,15 @@ export const App: React.FC = () => {
       setActiveKanbanId(null);
       setActiveNoteId(null);
     } else {
+      // Se o projeto já está ativo, apenas garante que está carregado
+      // sem sobrescrever a seleção atual (kanban/note/view)
+      if (activeProjectId === id && activeProject) {
+        return;
+      }
       setActiveProjectId(id);
       loadActiveProject(id).then(proj => {
         if (proj) {
-          if (proj.kanbans && proj.kanbans.length > 0) {
-            setActiveKanbanId(proj.kanbans[0].id);
-            setActiveNoteId(null);
-            setCurrentView('BOARD');
-          } else if (proj.notes && proj.notes.length > 0) {
-            setActiveNoteId(proj.notes[0].id);
-            setActiveKanbanId(null);
-            setCurrentView('NOTE');
-          } else {
-            setCurrentView('BOARD');
-          }
+          setCurrentView('PROJECT_OVERVIEW');
         }
       });
     }
@@ -243,13 +238,45 @@ export const App: React.FC = () => {
     setCurrentView('NOTE');
   };
 
+  // Note Update Handler (chamado pelo auto-save do editor)
+  const handleNoteUpdated = useCallback((updatedNote: import('./types').Note) => {
+    setActiveProject((prev) => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        notes: (prev.notes || []).map((n) =>
+          n.id === updatedNote.id ? updatedNote : n
+        ),
+      };
+    });
+  }, []);
+
   // Task Creation Handler
-  const handleCreateTask = async (kanbanId: string, input: CreateTaskInput) => {
+  const handleCreateTask = async (
+    kanbanId: string,
+    input: CreateTaskInput,
+    initialSubtasks?: string[]
+  ) => {
     const newTask = await tasksApi.create(kanbanId, input);
+    let createdSubtasks: Subtask[] = [];
+    if (initialSubtasks && initialSubtasks.length > 0) {
+      for (const stTitle of initialSubtasks) {
+        if (stTitle.trim()) {
+          try {
+            const st = await tasksApi.addSubtask(newTask.id, stTitle.trim());
+            createdSubtasks.push(st);
+          } catch (e) {
+            console.error('Failed to create initial subtask:', e);
+          }
+        }
+      }
+    }
+
     const completeTask: Task = {
       ...newTask,
-      subtasks: newTask.subtasks || [],
+      subtasks: newTask.subtasks && newTask.subtasks.length > 0 ? newTask.subtasks : createdSubtasks,
     };
+
     setActiveProject((prev) => {
       if (!prev) return null;
       return {
@@ -263,8 +290,44 @@ export const App: React.FC = () => {
     });
   };
 
+  const handleUpdateTask = async (taskId: string, updates: Partial<Task>) => {
+    if (!activeProject) return;
+    const prevProject = activeProject;
+
+    setActiveProject({
+      ...activeProject,
+      kanbans: activeProject.kanbans.map((k) => ({
+        ...k,
+        tasks: k.tasks.map((t) =>
+          t.id === taskId ? { ...t, ...updates } : t
+        ),
+      })),
+    });
+
+    try {
+      const { columnId, column, kanban, subtasks, tags, ...updateData } = updates as any;
+      if (tags) {
+        updateData.tagIds = tags.map((t: any) => t.id);
+      }
+      const updatedServerTask = await tasksApi.update(taskId, updateData);
+      setActiveProject((prev) => {
+        if (!prev) return null;
+        return {
+          ...prev,
+          kanbans: prev.kanbans.map((k) => ({
+            ...k,
+            tasks: k.tasks.map((t) => (t.id === taskId ? { ...t, ...updatedServerTask } : t)),
+          })),
+        };
+      });
+    } catch (err) {
+      console.error('Failed to update task:', err);
+      setActiveProject(prevProject);
+    }
+  };
+
   // Task Move / Status Update Handler
-  const handleMoveTask = async (id: string, newStatus: TaskStatus) => {
+  const handleMoveTask = async (id: string, newStatus: string, columnId?: string | null) => {
     if (!activeProject) return;
     const prevProject = activeProject;
 
@@ -274,13 +337,13 @@ export const App: React.FC = () => {
       kanbans: activeProject.kanbans.map((kanban) => ({
         ...kanban,
         tasks: kanban.tasks.map((t) =>
-          t.id === id ? { ...t, status: newStatus } : t
+          t.id === id ? { ...t, status: newStatus, columnId: columnId || null } : t
         ),
       })),
     });
 
     try {
-      await tasksApi.updateStatus(id, newStatus);
+      await tasksApi.updateStatus(id, newStatus, columnId || null);
     } catch (err) {
       console.error('Failed to update task status:', err);
       setActiveProject(prevProject);
@@ -448,7 +511,7 @@ export const App: React.FC = () => {
         />
 
         {/* Main Content Area */}
-        <main className={`flex-1 w-full mx-auto ${currentView === 'CHAT' ? 'max-w-none px-0 py-0' : 'max-w-7xl px-8 lg:px-12 py-8 space-y-8'}`}>
+        <main className={`flex-1 w-full mx-auto min-w-0 ${currentView === 'CHAT' ? 'max-w-none px-0 py-0' : 'max-w-7xl px-8 lg:px-12 py-8 space-y-8'}`}>
           {/* Error Banner se conexão falhar */}
           {error && (
             <div className="flex items-center justify-between p-4 rounded-2xl bg-neutral-100 text-neutral-600 text-sm">
@@ -474,6 +537,26 @@ export const App: React.FC = () => {
             <div className="flex flex-col items-center justify-center py-32 space-y-3">
               <Loader2 className="w-8 h-8 text-neutral-900 animate-spin" />
             </div>
+          ) : currentView === 'PROJECT_OVERVIEW' ? (
+            activeProject && (
+              <ProjectOverview
+                project={activeProject}
+                onSelectKanban={(kId) => {
+                  setActiveKanbanId(kId);
+                  setCurrentView('BOARD');
+                }}
+                onSelectNote={(nId) => {
+                  setActiveNoteId(nId);
+                  setCurrentView('NOTE');
+                }}
+                onOpenCreateKanban={() => setIsCreateKanbanModalOpen(true)}
+                onOpenCreateNote={() => setIsCreateNoteModalOpen(true)}
+                onProjectUpdated={(updatedProject) => {
+                  setActiveProject(updatedProject);
+                  setProjects(prev => prev.map(p => p.id === updatedProject.id ? updatedProject : p));
+                }}
+              />
+            )
           ) : currentView === 'PROJECTS' ? (
             /* Portfolio View: List of all projects */
             <ProjectList
@@ -506,36 +589,36 @@ export const App: React.FC = () => {
             </div>
 
           ) : currentView === 'NOTE' ? (
-            /* Active Project Note View */
-            <div className="bg-white rounded-2xl shadow-sm border border-neutral-200 p-8 min-h-[600px]">
-              {activeNoteId && activeProject?.notes?.find(n => n.id === activeNoteId) ? (
-                <div className="space-y-4">
-                  <h2 className="text-2xl font-bold text-neutral-900">
-                    {activeProject.notes.find(n => n.id === activeNoteId)?.title}
-                  </h2>
-                  <div className="prose max-w-none text-neutral-600">
-                    {activeProject.notes.find(n => n.id === activeNoteId)?.content || 'Nota vazia.'}
-                  </div>
-                  {/* TODO: Add a real rich text editor here */}
-                </div>
-              ) : (
+            /* Active Project Note View — Rich Text Editor */
+            activeNoteId && activeProject ? (
+              <NoteEditorView
+                noteId={activeNoteId}
+                project={activeProject}
+                onNoteUpdated={handleNoteUpdated}
+              />
+            ) : (
+              <div className="bg-white rounded-2xl shadow-sm border border-neutral-200 p-8 min-h-[600px]">
                 <div className="text-center py-20 px-4">
-                  <h3 className="text-sm font-semibold text-neutral-900">Nota não encontrada</h3>
+                  <h3 className="text-sm font-semibold text-neutral-900">Selecione uma nota</h3>
+                  <p className="text-xs text-neutral-500 mt-1">Escolha uma nota na barra lateral para começar a editar.</p>
                 </div>
-              )}
-            </div>
+              </div>
+            )
           ) : (
             /* Active Project Kanban View */
             <KanbanBoard
               project={activeProject}
+              kanban={activeProject?.kanbans?.find(k => k.id === activeKanbanId) || null}
               tasks={displayedTasks}
               onMoveTask={handleMoveTask}
+              onUpdateTask={handleUpdateTask}
               onDeleteTask={handleDeleteTask}
               onAddSubtask={handleAddSubtask}
               onToggleSubtask={handleToggleSubtask}
               onDeleteSubtask={handleDeleteSubtask}
               onOpenCreateTask={handleOpenCreateTask}
               onOpenCreateModal={() => handleOpenCreateTask()}
+              onRefreshKanban={() => { if (activeProjectId) loadActiveProject(activeProjectId, true); }}
             />
           )}
         </main>

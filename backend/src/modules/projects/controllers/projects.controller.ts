@@ -4,7 +4,7 @@ import { kanbanService } from '../services/kanban.service.js';
 import { noteService } from '../services/note.service.js';
 import { updateLogService } from '../services/update-log.service.js';
 import { memberService } from '../services/member.service.js';
-import { taskService, VALID_STATUSES } from '../services/task.service.js';
+import { taskService } from '../services/task.service.js';
 import { subtaskService } from '../services/subtask.service.js';
 import { ValidationError, NotFoundError } from '../../shared/errors.js';
 
@@ -549,21 +549,17 @@ export const deleteMember = async (req: Request, res: Response) => {
 
 export const listTasks = async (req: Request, res: Response) => {
   try {
-    const { status, isSprintActive, hasDueDate, projectId } = req.query;
+    const { status, isSprintActive, hasDueDate, projectId, columnId } = req.query;
     const kanbanId = req.query.kanbanId ? String(req.query.kanbanId).trim() : undefined;
     const projId = projectId ? String(projectId).trim() : undefined;
     const statusStr = status ? String(status) : undefined;
-
-    if (statusStr && !VALID_STATUSES.includes(statusStr as any)) {
-      return res.status(400).json({
-        error: `Invalid status: ${statusStr}. Must be one of: ${VALID_STATUSES.join(', ')}`,
-      });
-    }
+    const colId = columnId ? String(columnId) : undefined;
 
     const tasks = await taskService.listTasks({
       kanbanId,
       projectId: projId,
       status: statusStr,
+      columnId: colId,
       isSprintActive: isSprintActive !== undefined ? isSprintActive === 'true' : undefined,
       hasDueDate: hasDueDate !== undefined ? hasDueDate === 'true' : undefined,
     });
@@ -608,7 +604,7 @@ export const getTaskById = async (req: Request, res: Response) => {
 export const createTask = async (req: Request, res: Response) => {
   try {
     const kanbanIdFromParams = req.params?.kanbanId;
-    const { title, kanbanId: kanbanIdFromBody, description, status, dueDate, isSprintActive } = req.body;
+    const { title, kanbanId: kanbanIdFromBody, description, status, columnId, tagIds, dueDate, isSprintActive } = req.body;
     const rawKanbanId = kanbanIdFromParams || kanbanIdFromBody;
     const kanbanId = rawKanbanId ? String(rawKanbanId).trim() : '';
 
@@ -618,17 +614,14 @@ export const createTask = async (req: Request, res: Response) => {
     if (!title || typeof title !== 'string' || !title.trim()) {
       return res.status(400).json({ error: 'Title is required' });
     }
-    if (status !== undefined && !VALID_STATUSES.includes(status)) {
-      return res.status(400).json({
-        error: `Invalid status: ${status}. Must be one of: ${VALID_STATUSES.join(', ')}`,
-      });
-    }
 
     const task = await taskService.createTask({
       kanbanId,
       title: title.trim(),
       description: description ? String(description).trim() : null,
       status,
+      columnId,
+      tagIds,
       dueDate,
       isSprintActive,
     });
@@ -647,17 +640,16 @@ export const createTask = async (req: Request, res: Response) => {
 export const updateTask = async (req: Request, res: Response) => {
   try {
     const id = String(req.params.id);
-    const { status, title, description, kanbanId, dueDate, isSprintActive } = req.body;
+    const { status, columnId, tagIds, title, description, kanbanId, dueDate, isSprintActive } = req.body;
 
-    if (status !== undefined && !VALID_STATUSES.includes(status)) {
-      return res.status(400).json({ error: 'Invalid status' });
-    }
     if (title !== undefined && (typeof title !== 'string' || !title.trim())) {
       return res.status(400).json({ error: 'Title cannot be empty' });
     }
 
     const task = await taskService.updateTask(id, {
       status,
+      columnId,
+      tagIds,
       title,
       description,
       kanbanId,
@@ -679,11 +671,11 @@ export const updateTask = async (req: Request, res: Response) => {
 export const updateTaskStatus = async (req: Request, res: Response) => {
   try {
     const id = String(req.params.id);
-    const { status } = req.body;
-    if (!status || !VALID_STATUSES.includes(status)) {
-      return res.status(400).json({ error: 'Invalid status' });
+    const { status, columnId } = req.body;
+    if (status === undefined && columnId === undefined) {
+      return res.status(400).json({ error: 'Status or columnId is required' });
     }
-    const task = await taskService.updateTask(id, { status });
+    const task = await taskService.updateTask(id, { status, columnId });
     res.json(task);
   } catch (error: any) {
     if (error instanceof ValidationError) {

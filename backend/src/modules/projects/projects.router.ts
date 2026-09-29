@@ -61,3 +61,14 @@ projectsRouter.post('/api/tasks/:id/subtasks', controller.createSubtask);
 projectsRouter.patch('/api/subtasks/:id', controller.toggleSubtask);
 projectsRouter.patch('/api/subtasks/:id/toggle', controller.toggleSubtask);
 projectsRouter.delete('/api/subtasks/:id', controller.deleteSubtask);
+
+// Kanban Customization
+import * as customizationController from './controllers/kanban-customization.controller.js';
+
+projectsRouter.post('/api/kanbans/:kanbanId/columns', customizationController.addKanbanColumn);
+projectsRouter.patch('/api/columns/:columnId', customizationController.updateKanbanColumn);
+projectsRouter.delete('/api/columns/:columnId', customizationController.deleteKanbanColumn);
+
+projectsRouter.post('/api/kanbans/:kanbanId/tags', customizationController.addKanbanTag);
+projectsRouter.patch('/api/tags/:tagId', customizationController.updateKanbanTag);
+projectsRouter.delete('/api/tags/:tagId', customizationController.deleteKanbanTag);

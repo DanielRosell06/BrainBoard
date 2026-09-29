@@ -42,28 +42,51 @@ export const ChatView: React.FC<ChatViewProps> = ({ activeChatId }) => {
     setInput('');
     
     // Optimistic UI update for user message
-    const tempId = `temp-${Date.now()}`;
+    const tempUserId = `temp-user-${Date.now()}`;
+    const tempAiId = `temp-ai-${Date.now()}`;
+    
     setMessages((prev) => [
       ...prev,
-      { id: tempId, role: 'user', content: userMessage, conversationId: activeChatId, createdAt: new Date().toISOString() },
+      { id: tempUserId, role: 'user', content: userMessage, conversationId: activeChatId, createdAt: new Date().toISOString() },
+      { id: tempAiId, role: 'assistant', content: '', conversationId: activeChatId, createdAt: new Date().toISOString() }
     ]);
     
     setIsLoading(true);
 
     try {
-      const responseMsg = await chatApi.sendMessage(activeChatId, userMessage);
+      let isFirstChunk = true;
+      const responseMsg = await chatApi.sendMessageStream(
+        activeChatId, 
+        userMessage,
+        (chunkText) => {
+          if (isFirstChunk) {
+            setIsLoading(false); // Stop loading animation when first chunk arrives
+            isFirstChunk = false;
+          }
+          setMessages((prev) => 
+            prev.map(m => m.id === tempAiId ? { ...m, content: m.content + chunkText } : m)
+          );
+        },
+        () => {
+          window.dispatchEvent(new Event('chat-title-updated'));
+        }
+      );
+      
+      // Update with final message from backend (which has proper DB ID)
       setMessages((prev) => {
-        // Remove temp message if needed, or just append the real ones. 
-        // Actually, let's just refetch or append the response. 
-        // A better approach is to rely on the response from backend which only returns the AI message.
-        // Wait, the backend returns the saved assistant message.
-        return [...prev.filter(m => m.id !== tempId), 
-          { id: tempId + '-real', role: 'user', content: userMessage, conversationId: activeChatId, createdAt: new Date().toISOString() },
+        const withoutTemps = prev.filter(m => m.id !== tempUserId && m.id !== tempAiId);
+        return [
+          ...withoutTemps,
+          { id: tempUserId + '-real', role: 'user', content: userMessage, conversationId: activeChatId, createdAt: new Date().toISOString() },
           responseMsg
         ];
       });
     } catch (err) {
       console.error('Failed to send message:', err);
+      // In case of error, show an error message in place of AI temp message
+      setMessages((prev) => 
+        prev.map(m => m.id === tempAiId ? { ...m, content: '⚠️ Ocorreu um erro ao gerar a resposta.' } : m)
+      );
     } finally {
       setIsLoading(false);
     }

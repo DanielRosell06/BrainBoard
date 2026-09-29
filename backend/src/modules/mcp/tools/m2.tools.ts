@@ -36,7 +36,19 @@ export const m2ToolSchemas: Tool[] = [
         includeCompleted: { type: 'boolean', description: 'Incluir itens concluídos (padrão: false).' },
       },
     },
-  }
+  },
+  {
+    name: 'add_to_sprint',
+    description: 'Marca ou desmarca uma tarefa para a Sprint semanal ativa.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        taskId: { type: 'string', description: 'ID da tarefa.' },
+        isSprintActive: { type: 'boolean', description: 'Se a tarefa fica ativa na Sprint.' },
+      },
+      required: ['taskId'],
+    },
+  },
 ];
 
 export async function handleM2Tools(name: string, args: any) {
@@ -123,6 +135,21 @@ export async function handleM2Tools(name: string, args: any) {
     };
   }
 
+  if (name === 'add_to_sprint') {
+    const taskId = String(args?.taskId ?? '').trim();
+    if (!taskId) throw new Error('taskId é obrigatório');
+    const isSprintActive = args?.isSprintActive !== undefined ? Boolean(args.isSprintActive) : true;
+
+    const task = await taskService.updateTask(taskId, { isSprintActive });
+    return {
+      content: [
+        {
+          type: 'text' as const,
+          text: JSON.stringify({ success: true, message: `Tarefa ${taskId} ${isSprintActive ? 'adicionada à' : 'removida da'} Sprint.`, id: task.id, task }, null, 2),
+        },
+      ],
+    };
+  }
+
   return null;
 }
-

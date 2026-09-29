@@ -3,9 +3,9 @@ import {
   Search,
   FolderKanban,
   LayoutGrid,
-  Flame,
+  
   Calendar,
-  Milestone,
+  
 } from 'lucide-react';
 import type { Project, ProjectSummary, ActiveView } from '../types';
 
@@ -17,7 +17,7 @@ export interface TopHeaderProps {
   onOpenCreateModal: () => void;
   onOpenCreateProjectModal?: () => void;
   onOpenCreateAppointmentModal?: () => void;
-  onOpenCreateDeadlineModal?: () => void;
+  
   isConnected?: boolean;
   isSyncing?: boolean;
   onRefresh?: () => void;
@@ -33,7 +33,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
   onOpenCreateModal,
   onOpenCreateProjectModal,
   onOpenCreateAppointmentModal,
-  onOpenCreateDeadlineModal,
+  
   activeProject = null,
 }) => {
   const searchInputRef = React.useRef<HTMLInputElement>(null);
@@ -60,30 +60,26 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
       label: 'Quadro Kanban', 
       icon: <LayoutGrid className="w-3.5 h-3.5" /> 
     });
-    viewTabs.push({ 
-      id: 'PROJECT_SPRINT', 
-      label: 'Sprint Semanal', 
-      icon: <Milestone className="w-3.5 h-3.5" /> 
-    });
   }
 
   viewTabs.push(
-    { id: 'SPRINT', label: 'Visão Global', icon: <Flame className="w-3.5 h-3.5" /> },
     { id: 'CALENDAR', label: 'Calendário', icon: <Calendar className="w-3.5 h-3.5" /> }
   );
 
   let viewTitle = 'Projetos';
   
-  if (currentView === 'BOARD') {
-    viewTitle = activeProject ? activeProject.title : 'Painel de Projeto';
-  } else if (currentView === 'PROJECT_SPRINT') {
-    viewTitle = `Sprint: ${activeProject?.title || ''}`;
-  } else if (currentView === 'SPRINT') {
-    viewTitle = 'Visão Global';
-  } else if (currentView === 'ACADEMIC') {
-    viewTitle = 'Área Acadêmica';
+  if (currentView === 'PROJECTS') {
+    viewTitle = 'Projetos';
   } else if (currentView === 'CALENDAR') {
     viewTitle = 'Calendário';
+  } else if (currentView === 'CHAT') {
+    viewTitle = 'Assistente';
+  } else if (activeProject) {
+    viewTitle = activeProject.title;
+  } else if (currentView === 'BOARD') {
+    viewTitle = 'Painel de Projeto';
+  } else if (currentView === 'NOTE') {
+    viewTitle = 'Nota';
   }
 
   return (
@@ -120,13 +116,6 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
             {currentView === 'CALENDAR' && onOpenCreateAppointmentModal ? (
               <button
                 onClick={onOpenCreateAppointmentModal}
-                className="flex items-center justify-center py-2.5 px-4 bg-neutral-900 hover:bg-neutral-800 text-white text-sm font-medium rounded-xl transition-all shrink-0"
-              >
-                <span>Novo</span>
-              </button>
-            ) : currentView === 'ACADEMIC' && onOpenCreateDeadlineModal ? (
-              <button
-                onClick={onOpenCreateDeadlineModal}
                 className="flex items-center justify-center py-2.5 px-4 bg-neutral-900 hover:bg-neutral-800 text-white text-sm font-medium rounded-xl transition-all shrink-0"
               >
                 <span>Novo</span>

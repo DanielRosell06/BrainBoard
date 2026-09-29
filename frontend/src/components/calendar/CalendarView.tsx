@@ -7,7 +7,7 @@ import {
   Clock,
   MapPin,
   ExternalLink,
-  GraduationCap,
+  
   FolderKanban,
   CheckCircle2,
   Trash2,
@@ -31,8 +31,8 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ onSelectProject }) =
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Filter: ALL, APPOINTMENTS, ACADEMIC, TASKS
-  const [eventTypeFilter, setEventTypeFilter] = useState<'ALL' | 'APPOINTMENTS' | 'ACADEMIC' | 'TASKS'>('ALL');
+  // Filter: ALL, APPOINTMENTS, TASKS
+  const [eventTypeFilter, setEventTypeFilter] = useState<'ALL' | 'APPOINTMENTS' | 'TASKS'>('ALL');
 
   // Modal
   const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
@@ -146,8 +146,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ onSelectProject }) =
   const filteredEvents = useMemo(() => {
     return events.filter((e) => {
       if (eventTypeFilter === 'APPOINTMENTS' && e.sourceType !== 'APPOINTMENT') return false;
-      if (eventTypeFilter === 'ACADEMIC' && (e.sourceType !== 'TASK_DEADLINE' || e.projectType !== 'ACADEMIC')) return false;
-      if (eventTypeFilter === 'TASKS' && (e.sourceType !== 'TASK_DEADLINE' || e.projectType === 'ACADEMIC')) return false;
+      if (eventTypeFilter === 'TASKS' && e.sourceType !== 'TASK_DEADLINE') return false;
       return true;
     });
   }, [events, eventTypeFilter]);
@@ -223,8 +222,6 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ onSelectProject }) =
   // Helper for chip styling
   const renderEventChip = (ev: CalendarEventProjection) => {
     const isApt = ev.sourceType === 'APPOINTMENT';
-    const isAcad = ev.projectType === 'ACADEMIC';
-
     let chipBg = 'bg-sky-50 text-sky-700 border-sky-200';
     let icon = <FolderKanban className="w-2.5 h-2.5 shrink-0 text-sky-600" />;
 
@@ -233,11 +230,6 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ onSelectProject }) =
         ? 'bg-slate-100 text-slate-500 border-slate-200 line-through'
         : 'bg-slate-100 text-slate-900 border-slate-300';
       icon = <Clock className="w-2.5 h-2.5 shrink-0 text-slate-900" />;
-    } else if (isAcad) {
-      chipBg = ev.isCompleted
-        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-        : 'bg-pink-50 text-pink-700 border-pink-200';
-      icon = <GraduationCap className="w-2.5 h-2.5 shrink-0 text-pink-600" />;
     }
 
     return (
@@ -323,17 +315,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ onSelectProject }) =
               <span className="w-2 h-2 rounded-full bg-slate-900" />
               <span>Compromissos</span>
             </button>
-            <button
-              onClick={() => setEventTypeFilter('ACADEMIC')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl transition-all ${
-                eventTypeFilter === 'ACADEMIC'
-                  ? 'bg-white text-pink-700 shadow-xs font-bold'
-                  : 'text-slate-500 hover:text-slate-800'
-              }`}
-            >
-              <span className="w-2 h-2 rounded-full bg-pink-500" />
-              <span>Entregas Acadêmicas</span>
-            </button>
+
             <button
               onClick={() => setEventTypeFilter('TASKS')}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl transition-all ${
@@ -524,8 +506,6 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ onSelectProject }) =
                         ? 'bg-slate-50 border-slate-200/70 opacity-75'
                         : isApt
                         ? 'bg-slate-100/40 border-slate-300/80 shadow-xs'
-                        : ev.projectType === 'ACADEMIC'
-                        ? 'bg-pink-50/40 border-pink-200/80 shadow-xs'
                         : 'bg-sky-50/40 border-sky-200/80 shadow-xs'
                     }`}
                   >
@@ -572,15 +552,11 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ onSelectProject }) =
                           className={`text-[9px] font-bold uppercase px-2 py-0.5 rounded-full border ${
                             isApt
                               ? 'bg-slate-100 text-slate-900 border-slate-300'
-                              : ev.projectType === 'ACADEMIC'
-                              ? 'bg-pink-100 text-pink-700 border-pink-200'
                               : 'bg-sky-100 text-sky-700 border-sky-200'
                           }`}
                         >
                           {isApt
                             ? 'Compromisso'
-                            : ev.projectType === 'ACADEMIC'
-                            ? 'Acadêmico'
                             : 'Projeto'}
                         </span>
 

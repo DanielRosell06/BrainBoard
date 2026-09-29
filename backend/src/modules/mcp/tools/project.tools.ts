@@ -52,6 +52,30 @@ export const projectToolSchemas: Tool[] = [
     },
   },
   {
+    name: 'read_note',
+    description: 'Lê o conteúdo e detalhes de uma nota específica.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        noteId: { type: 'string', description: 'ID da nota.' },
+      },
+      required: ['noteId'],
+    },
+  },
+  {
+    name: 'update_note',
+    description: 'Edita o título ou conteúdo de uma nota existente.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        noteId: { type: 'string', description: 'ID da nota.' },
+        title: { type: 'string', description: 'Novo título da nota (opcional).' },
+        content: { type: 'string', description: 'Novo conteúdo em Markdown da nota (opcional).' },
+      },
+      required: ['noteId'],
+    },
+  },
+  {
     name: 'read_project_context',
     description:
       'Lê o contexto completo do projeto para a IA: metadados, businessLogic, githubRepo, settings, kanbans, notes com tarefas e subtarefas, logs de atualização e membros.',
@@ -196,6 +220,38 @@ export async function handleProjectTools(name: string, args: any) {
 
     return {
       content: [{ type: 'text' as const, text: JSON.stringify({ success: true, message: `Nota '${note.title}' criada com sucesso.`, id: note.id, note }, null, 2) }],
+    };
+  }
+
+  if (name === 'read_note') {
+    const noteId = String(args?.noteId ?? '').trim();
+    if (!noteId) throw new Error('noteId é obrigatório');
+
+    const note = await noteService.getNoteById(noteId);
+    if (!note) {
+      return {
+        isError: true,
+        content: [{ type: 'text' as const, text: `Nota não encontrada com o ID: ${noteId}` }],
+      };
+    }
+
+    return {
+      content: [{ type: 'text' as const, text: JSON.stringify(note, null, 2) }],
+    };
+  }
+
+  if (name === 'update_note') {
+    const noteId = String(args?.noteId ?? '').trim();
+    if (!noteId) throw new Error('noteId é obrigatório');
+
+    const updateData: { title?: string; content?: string } = {};
+    if (args?.title) updateData.title = String(args.title).trim();
+    if (args?.content !== undefined) updateData.content = String(args.content);
+
+    const note = await noteService.updateNote(noteId, updateData);
+
+    return {
+      content: [{ type: 'text' as const, text: JSON.stringify({ success: true, message: 'Nota atualizada com sucesso.', id: note.id, note }, null, 2) }],
     };
   }
 

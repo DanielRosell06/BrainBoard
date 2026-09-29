@@ -42,7 +42,7 @@ interface TestResult {
 }
 
 const results: TestResult[] = [];
-let targetWorkspace = 'C:/Users/Kaue/Desktop/BrainBoard';
+let targetWorkspace = process.cwd();
 if (process.env.WORKSPACE_DIR && fs.existsSync(process.env.WORKSPACE_DIR)) {
   targetWorkspace = process.env.WORKSPACE_DIR;
 }

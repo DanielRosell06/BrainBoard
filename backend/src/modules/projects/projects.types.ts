@@ -1,26 +1,28 @@
 import type {
   Project,
   Kanban,
+  KanbanColumn,
+  KanbanTag,
   Note,
   UpdateLog,
   Member,
   Task,
   Subtask,
   ProjectStatus,
-  Status,
   ProjectType,
 } from '@prisma/client';
 
 export type {
   Project,
   Kanban,
+  KanbanColumn,
+  KanbanTag,
   Note,
   UpdateLog,
   Member,
   Task,
   Subtask,
   ProjectStatus,
-  Status,
   ProjectType,
 };
 
@@ -66,7 +68,9 @@ export interface UpdateKanbanInput {
 }
 
 export type KanbanWithTasks = Kanban & {
-  tasks: (Task & { subtasks: Subtask[] })[];
+  tasks: (Task & { subtasks: Subtask[]; tags: KanbanTag[] })[];
+  columns: KanbanColumn[];
+  tags: KanbanTag[];
 };
 
 export interface CreateTaskInput {
@@ -74,6 +78,8 @@ export interface CreateTaskInput {
   title: string;
   description?: string | null | undefined;
   status?: string | undefined;
+  columnId?: string | undefined;
+  tagIds?: string[] | undefined;
   dueDate?: Date | string | null | undefined;
   isSprintActive?: boolean | undefined;
 }
@@ -83,6 +89,8 @@ export interface UpdateTaskInput {
   title?: string | undefined;
   description?: string | null | undefined;
   status?: string | undefined;
+  columnId?: string | null | undefined;
+  tagIds?: string[] | undefined;
   dueDate?: Date | string | null | undefined;
   isSprintActive?: boolean | undefined;
 }
@@ -91,6 +99,7 @@ export interface TaskFilterOptions {
   kanbanId?: string | undefined;
   projectId?: string | undefined;
   status?: string | undefined;
+  columnId?: string | undefined;
   isSprintActive?: boolean | undefined;
   hasDueDate?: boolean | undefined;
 }
@@ -98,6 +107,8 @@ export interface TaskFilterOptions {
 export type TaskWithSubtasks = Task & {
   subtasks: Subtask[];
   kanban?: Kanban;
+  column?: KanbanColumn | null;
+  tags?: KanbanTag[];
 };
 
 export interface CreateMemberInput {

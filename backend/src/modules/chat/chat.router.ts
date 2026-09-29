@@ -46,8 +46,8 @@ chatRouter.post('/api/chat/conversations/:id/messages', async (req, res, next) =
     if (!content) {
       return res.status(400).json({ error: 'Message content is required' });
     }
-    const responseMessage = await chatService.processMessage(req.params.id, content);
-    res.json(responseMessage);
+    // Now we pass the response object to the stream function, which handles closing it
+    await chatService.processMessageStream(req.params.id, content, res);
   } catch (err) {
     next(err);
   }

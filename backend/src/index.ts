@@ -6,7 +6,7 @@ import { projectService, VALID_PROJECT_STATUSES, VALID_PROJECT_TYPES } from './s
 // (removed)
 import { updateLogService } from './services/update-log.service.js';
 import { memberService } from './services/member.service.js';
-import { taskService, VALID_STATUSES } from './services/task.service.js';
+import { taskService } from './services/task.service.js';
 import { subtaskService } from './services/subtask.service.js';
 import { appointmentService } from './modules/calendar/appointment.service.js';
 import { calendarService } from './modules/calendar/calendar.service.js';
@@ -143,7 +143,7 @@ export const CONTRACT_REGISTRY = {
     'get_task',
     'create_appointment',
     'list_upcoming_deadlines',
-    
+    'add_to_sprint',
   ],
   handlers: [
     "name === 'update_business_logic'",
@@ -154,7 +154,7 @@ export const CONTRACT_REGISTRY = {
     "name === 'move_task'",
     "name === 'create_appointment'",
     "name === 'list_upcoming_deadlines'",
-    
+    "name === 'add_to_sprint'",
   ],
   boundaryChecks: {
     titleCheck: (title: any) => !title || !title.trim(),

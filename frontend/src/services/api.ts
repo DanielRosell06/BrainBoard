@@ -140,6 +140,49 @@ export const kanbansApi = {
 };
 
 // ============================================================
+// Kanban Customization API
+// ============================================================
+export const kanbanColumnsApi = {
+  create(kanbanId: string, input: { title: string; order?: number }): Promise<import('../types').KanbanColumn> {
+    return request(`/api/kanbans/${kanbanId}/columns`, {
+      method: 'POST',
+      body: JSON.stringify(input),
+    });
+  },
+  update(columnId: string, input: { title?: string; order?: number }): Promise<import('../types').KanbanColumn> {
+    return request(`/api/columns/${columnId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(input),
+    });
+  },
+  delete(columnId: string): Promise<void> {
+    return request(`/api/columns/${columnId}`, {
+      method: 'DELETE',
+    });
+  },
+};
+
+export const kanbanTagsApi = {
+  create(kanbanId: string, input: { name: string; color?: string }): Promise<import('../types').KanbanTag> {
+    return request(`/api/kanbans/${kanbanId}/tags`, {
+      method: 'POST',
+      body: JSON.stringify(input),
+    });
+  },
+  update(tagId: string, input: { name?: string; color?: string }): Promise<import('../types').KanbanTag> {
+    return request(`/api/tags/${tagId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(input),
+    });
+  },
+  delete(tagId: string): Promise<void> {
+    return request(`/api/tags/${tagId}`, {
+      method: 'DELETE',
+    });
+  },
+};
+
+// ============================================================
 // Notes API
 // ============================================================
 export const notesApi = {
@@ -155,18 +198,18 @@ export const notesApi = {
   },
 
   update(
-    projectId: string,
+    _projectId: string,
     noteId: string,
     input: { title?: string; content?: string }
   ): Promise<import('../types').Note> {
-    return request(`/api/projects/${projectId}/notes/${noteId}`, {
+    return request(`/api/notes/${noteId}`, {
       method: 'PATCH',
       body: JSON.stringify(input),
     });
   },
 
-  delete(projectId: string, noteId: string): Promise<void> {
-    return request(`/api/projects/${projectId}/notes/${noteId}`, {
+  delete(_projectId: string, noteId: string): Promise<void> {
+    return request(`/api/notes/${noteId}`, {
       method: 'DELETE',
     });
   },
@@ -181,14 +224,12 @@ export const tasksApi = {
   },
 
   listAll(filters?: {
-    isSprintActive?: boolean;
     status?: TaskStatus;
     hasDueDate?: boolean;
     kanbanId?: string;
     projectId?: string;
   }): Promise<Task[]> {
     const params = new URLSearchParams();
-    if (filters?.isSprintActive !== undefined) params.set('isSprintActive', String(filters.isSprintActive));
     if (filters?.status) params.set('status', filters.status);
     if (filters?.hasDueDate !== undefined) params.set('hasDueDate', String(filters.hasDueDate));
     if (filters?.kanbanId) params.set('kanbanId', filters.kanbanId);
@@ -211,19 +252,13 @@ export const tasksApi = {
     });
   },
 
-  updateStatus(id: string, status: TaskStatus): Promise<Task> {
-    return request(`/api/tasks/${id}`, {
+  updateStatus(id: string, status?: string, columnId?: string | null): Promise<Task> {
+    return request(`/api/tasks/${id}/status`, {
       method: 'PATCH',
-      body: JSON.stringify({ status }),
+      body: JSON.stringify({ status, columnId }),
     });
   },
 
-  toggleSprint(id: string, isSprintActive: boolean): Promise<Task> {
-    return request(`/api/tasks/${id}`, {
-      method: 'PATCH',
-      body: JSON.stringify({ isSprintActive }),
-    });
-  },
 
   delete(id: string): Promise<void> {
     return request(`/api/tasks/${id}`, { method: 'DELETE' });
@@ -248,32 +283,7 @@ export const tasksApi = {
   },
 };
 
-// ============================================================
-// Sprints API
-// ============================================================
-export const sprintsApi = {
-  list(projectId: string): Promise<import('../types').Sprint[]> {
-    return request(`/api/projects/${projectId}/sprints`);
-  },
 
-  create(projectId: string, input: { title: string; goal?: string; startDate?: string; endDate?: string }): Promise<import('../types').Sprint> {
-    return request(`/api/projects/${projectId}/sprints`, {
-      method: 'POST',
-      body: JSON.stringify(input),
-    });
-  },
-
-  update(sprintId: string, input: { title?: string; goal?: string; status?: import('../types').SprintStatus; startDate?: string; endDate?: string }): Promise<import('../types').Sprint> {
-    return request(`/api/sprints/${sprintId}`, {
-      method: 'PATCH',
-      body: JSON.stringify(input),
-    });
-  },
-
-  delete(sprintId: string): Promise<void> {
-    return request(`/api/sprints/${sprintId}`, { method: 'DELETE' });
-  },
-};
 
 // ============================================================
 // Members API
@@ -382,36 +392,7 @@ export const calendarApi = {
   },
 };
 
-// ============================================================
-// Academic API
-// ============================================================
-export const academicApi = {
-  // Subjects
-  listSubjects(): Promise<import('../types').AcademicSubject[]> {
-    return request('/api/academic/subjects');
-  },
-  createSubject(input: import('../types').CreateAcademicSubjectInput): Promise<import('../types').AcademicSubject> {
-    return request('/api/academic/subjects', { method: 'POST', body: JSON.stringify(input) });
-  },
-  deleteSubject(id: string): Promise<void> {
-    return request(`/api/academic/subjects/${id}`, { method: 'DELETE' });
-  },
 
-  // Assignments
-  listAssignments(subjectId?: string): Promise<import('../types').AcademicAssignment[]> {
-    const qs = subjectId ? `?subjectId=${subjectId}` : '';
-    return request(`/api/academic/assignments${qs}`);
-  },
-  createAssignment(input: import('../types').CreateAcademicAssignmentInput): Promise<import('../types').AcademicAssignment> {
-    return request('/api/academic/assignments', { method: 'POST', body: JSON.stringify(input) });
-  },
-  updateAssignment(id: string, input: import('../types').UpdateAcademicAssignmentInput): Promise<import('../types').AcademicAssignment> {
-    return request(`/api/academic/assignments/${id}`, { method: 'PATCH', body: JSON.stringify(input) });
-  },
-  deleteAssignment(id: string): Promise<void> {
-    return request(`/api/academic/assignments/${id}`, { method: 'DELETE' });
-  },
-};
 
 // ============================================================
 // Chat API
@@ -431,5 +412,63 @@ export const chatApi = {
   },
   sendMessage(conversationId: string, content: string): Promise<import('../types').ChatMessage> {
     return request(`/api/chat/conversations/${conversationId}/messages`, { method: 'POST', body: JSON.stringify({ content }) });
+  },
+  async sendMessageStream(
+    conversationId: string,
+    content: string,
+    onChunk: (text: string) => void,
+    onTitle?: (title: string) => void
+  ): Promise<import('../types').ChatMessage> {
+    const res = await fetch(`${BASE_URL}/api/chat/conversations/${conversationId}/messages`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content }),
+    });
+
+    if (!res.ok) {
+      throw new ApiError(res.status, 'Erro ao enviar mensagem');
+    }
+
+    if (!res.body) {
+      throw new Error('No readable stream');
+    }
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder('utf-8');
+    let buffer = '';
+    let finalMessage: any = null;
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || ''; // last incomplete line
+
+      let currentEvent = '';
+      for (const line of lines) {
+        if (line.startsWith('event: ')) {
+          currentEvent = line.slice(7).trim();
+        } else if (line.startsWith('data: ')) {
+          const dataStr = line.slice(6).trim();
+          if (!dataStr) continue;
+          try {
+            const data = JSON.parse(dataStr);
+            if (currentEvent === 'chunk') {
+              onChunk(data);
+            } else if (currentEvent === 'title' && onTitle) {
+              onTitle(data);
+            } else if (currentEvent === 'done') {
+              finalMessage = data;
+            }
+          } catch (e) {
+            console.error('Failed to parse SSE data', e);
+          }
+        }
+      }
+    }
+
+    return finalMessage || { role: 'assistant', content: 'Erro ao obter resposta.', id: Date.now().toString(), conversationId, createdAt: new Date().toISOString() };
   },
 };

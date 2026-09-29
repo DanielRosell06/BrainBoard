@@ -25,12 +25,15 @@ export class KanbanService {
       where: { projectId },
       orderBy: { createdAt: 'asc' },
       include: {
+        columns: true,
+        tags: true,
         tasks: {
           orderBy: { createdAt: 'asc' },
           include: {
             subtasks: {
               orderBy: { createdAt: 'asc' },
             },
+            tags: true,
           },
         },
       },
@@ -45,12 +48,15 @@ export class KanbanService {
     return await prisma.kanban.findUnique({
       where: { id },
       include: {
+        columns: true,
+        tags: true,
         tasks: {
           orderBy: { createdAt: 'asc' },
           include: {
             subtasks: {
               orderBy: { createdAt: 'asc' },
             },
+            tags: true,
           },
         },
       },
@@ -78,10 +84,19 @@ export class KanbanService {
       data: {
         projectId: data.projectId,
         title: data.title.trim(),
+        columns: {
+          create: [
+            { title: 'A Fazer', order: 0 },
+            { title: 'Em Andamento', order: 1 },
+            { title: 'Concluído', order: 2 },
+          ],
+        },
       },
       include: {
+        columns: { orderBy: { order: 'asc' } },
+        tags: true,
         tasks: {
-          include: { subtasks: true },
+          include: { subtasks: true, tags: true, column: true },
         },
       },
     });
@@ -108,8 +123,10 @@ export class KanbanService {
         where: { id },
         data: updateData,
         include: {
+          columns: true,
+          tags: true,
           tasks: {
-            include: { subtasks: true },
+            include: { subtasks: true, tags: true },
           },
         },
       });

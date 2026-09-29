@@ -1,4 +1,3 @@
-import { Status } from '@prisma/client';
 import type { Task } from '@prisma/client';
 import { prisma } from '../../../prisma.js';
 import { ValidationError, NotFoundError } from '../../shared/errors.js';
@@ -8,8 +7,6 @@ import type {
   TaskFilterOptions,
   TaskWithSubtasks,
 } from '../projects.types.js';
-
-export const VALID_STATUSES: Status[] = ['TODO', 'IN_PROGRESS', 'DONE'];
 
 export class TaskService {
   async listTasks(filters?: TaskFilterOptions): Promise<TaskWithSubtasks[]> {
@@ -24,16 +21,11 @@ export class TaskService {
     }
 
     if (filters?.status) {
-      if (!VALID_STATUSES.includes(filters.status as Status)) {
-        throw new ValidationError(
-          `Invalid status: ${filters.status}. Must be one of: ${VALID_STATUSES.join(', ')}`
-        );
-      }
-      where.status = filters.status as Status;
+      where.status = filters.status;
     }
-
-    if (filters?.isSprintActive !== undefined) {
-      
+    
+    if (filters?.columnId) {
+      where.columnId = filters.columnId;
     }
 
     if (filters?.hasDueDate === true) {
@@ -42,7 +34,7 @@ export class TaskService {
 
     return await prisma.task.findMany({
       where,
-      include: { subtasks: true, kanban: true },
+      include: { subtasks: true, kanban: true, column: true, tags: true },
       orderBy: { createdAt: 'desc' },
     });
   }
@@ -54,7 +46,7 @@ export class TaskService {
 
     return await prisma.task.findUnique({
       where: { id },
-      include: { subtasks: true, kanban: true },
+      include: { subtasks: true, kanban: true, column: true, tags: true },
     });
   }
 
@@ -75,16 +67,6 @@ export class TaskService {
       throw new NotFoundError('Kanban not found');
     }
 
-    let status: Status = 'TODO';
-    if (data.status !== undefined) {
-      if (!VALID_STATUSES.includes(data.status as Status)) {
-        throw new ValidationError(
-          `Invalid status: ${data.status}. Must be one of: ${VALID_STATUSES.join(', ')}`
-        );
-      }
-      status = data.status as Status;
-    }
-
     let dueDate: Date | null = null;
     if (data.dueDate !== undefined && data.dueDate !== null) {
       const parsed = new Date(data.dueDate);
@@ -93,22 +75,30 @@ export class TaskService {
       }
       dueDate = parsed;
     }
-
     
+    const createData: any = {
+      kanbanId: data.kanbanId,
+      title: data.title.trim(),
+      description: data.description !== undefined && data.description !== null
+        ? String(data.description).trim()
+        : null,
+      status: data.status || 'TODO',
+      dueDate,
+    };
+    
+    if (data.columnId) {
+      createData.columnId = data.columnId;
+    }
+    
+    if (data.tagIds && Array.isArray(data.tagIds) && data.tagIds.length > 0) {
+      createData.tags = {
+        connect: data.tagIds.map(id => ({ id }))
+      };
+    }
 
     return await prisma.task.create({
-      data: {
-        kanbanId: data.kanbanId,
-        title: data.title.trim(),
-        description:
-          data.description !== undefined && data.description !== null
-            ? String(data.description).trim()
-            : null,
-        status,
-        dueDate,
-        
-      },
-      include: { subtasks: true, kanban: true },
+      data: createData,
+      include: { subtasks: true, kanban: true, column: true, tags: true },
     });
   }
 
@@ -117,22 +107,14 @@ export class TaskService {
       throw new ValidationError('Task ID is required');
     }
 
-    const updateData: {
-      status?: Status;
-      title?: string;
-      description?: string | null;
-      kanbanId?: string;
-      dueDate?: Date | null;
-      
-    } = {};
+    const updateData: any = {};
 
     if (data.status !== undefined) {
-      if (!VALID_STATUSES.includes(data.status as Status)) {
-        throw new ValidationError(
-          `Invalid status: ${data.status}. Must be one of: ${VALID_STATUSES.join(', ')}`
-        );
-      }
-      updateData.status = data.status as Status;
+      updateData.status = data.status;
+    }
+
+    if (data.columnId !== undefined) {
+      updateData.columnId = data.columnId;
     }
 
     if (data.title !== undefined) {
@@ -172,16 +154,20 @@ export class TaskService {
         updateData.dueDate = parsed;
       }
     }
-
-    if (data.isSprintActive !== undefined) {
-      
+    
+    if (data.tagIds !== undefined) {
+      if (data.tagIds === null) {
+        updateData.tags = { set: [] };
+      } else if (Array.isArray(data.tagIds)) {
+        updateData.tags = { set: data.tagIds.map(id => ({ id })) };
+      }
     }
 
     try {
       return await prisma.task.update({
         where: { id },
         data: updateData,
-        include: { subtasks: true, kanban: true },
+        include: { subtasks: true, kanban: true, column: true, tags: true },
       });
     } catch (error: any) {
       if (error && typeof error === 'object' && 'code' in error && error.code === 'P2025') {

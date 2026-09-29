@@ -1,19 +1,12 @@
 import React from 'react';
 import { Trash2 } from 'lucide-react';
-import type { ProjectSummary, ProjectStatus } from '../types';
-import { PROJECT_STATUS_LABELS } from '../types';
+import type { ProjectSummary } from '../types';
 
 interface ProjectCardProps {
   project: ProjectSummary;
   onClick: (id: string) => void;
   onDelete?: (id: string, title: string) => void;
 }
-
-const STATUS_DOT: Record<ProjectStatus, string> = {
-  PLANNING: 'bg-neutral-400',
-  ACTIVE: 'bg-neutral-900',
-  COMPLETED: 'bg-green-500',
-};
 
 export const ProjectCard: React.FC<ProjectCardProps> = ({ project, onClick, onDelete }) => {
   const formattedDate = new Date(project.createdAt).toLocaleDateString('pt-BR', {
@@ -61,12 +54,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({ project, onClick, onDe
                 <Trash2 className="w-4 h-4" />
               </button>
             )}
-            <span
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[12px] font-medium text-neutral-600 bg-neutral-100 border border-neutral-200"
-            >
-              <span className={`w-1.5 h-1.5 rounded-full ${STATUS_DOT[project.status]}`} />
-              {PROJECT_STATUS_LABELS[project.status]}
-            </span>
+
           </div>
         </div>
 
