@@ -9,7 +9,7 @@ import type {
   ProjectWithDetails,
 } from '../projects.types.js';
 
-export const VALID_PROJECT_STATUSES: ProjectStatus[] = ['PLANNING', 'ACTIVE', 'COMPLETED'];
+export const VALID_PROJECT_STATUSES: ProjectStatus[] = ['PLANNING', 'ACTIVE', 'COMPLETED', 'ARCHIVED'];
 export const VALID_PROJECT_TYPES: ProjectType[] = ['SOFTWARE'];
 
 export class ProjectService {
@@ -38,7 +38,7 @@ export class ProjectService {
       where,
       include: {
         kanbans: {
-          orderBy: { createdAt: 'asc' },
+          orderBy: [{ order: 'asc' }, { createdAt: 'asc' }],
           include: {
             columns: { orderBy: { order: 'asc' } },
             tags: true,
@@ -49,7 +49,7 @@ export class ProjectService {
           },
         },
         notes: {
-          orderBy: { createdAt: 'asc' },
+          orderBy: [{ order: 'asc' }, { createdAt: 'asc' }],
         },
         updateLogs: {
           orderBy: { createdAt: 'desc' },
@@ -57,8 +57,14 @@ export class ProjectService {
         members: {
           orderBy: { createdAt: 'asc' },
         },
+        links: {
+          orderBy: { createdAt: 'asc' },
+        },
+        whiteboards: { orderBy: [{ order: 'asc' }, { createdAt: 'asc' }] },
+        checklists: { orderBy: [{ order: 'asc' }, { createdAt: 'asc' }], include: { items: { orderBy: { order: 'asc' } } } },
+        bookmarks: { orderBy: [{ order: 'asc' }, { createdAt: 'asc' }] },
       },
-      orderBy: { createdAt: 'desc' },
+      orderBy: [{ order: 'asc' }, { createdAt: 'desc' }],
     });
   }
 
@@ -71,7 +77,7 @@ export class ProjectService {
       where: { id },
       include: {
         kanbans: {
-          orderBy: { createdAt: 'asc' },
+          orderBy: [{ order: 'asc' }, { createdAt: 'asc' }],
           include: {
             columns: { orderBy: { order: 'asc' } },
             tags: true,
@@ -82,7 +88,7 @@ export class ProjectService {
           },
         },
         notes: {
-          orderBy: { createdAt: 'asc' },
+          orderBy: [{ order: 'asc' }, { createdAt: 'asc' }],
         },
         updateLogs: {
           orderBy: { createdAt: 'desc' },
@@ -90,6 +96,12 @@ export class ProjectService {
         members: {
           orderBy: { createdAt: 'asc' },
         },
+        links: {
+          orderBy: { createdAt: 'asc' },
+        },
+        whiteboards: { orderBy: [{ order: 'asc' }, { createdAt: 'asc' }] },
+        checklists: { orderBy: [{ order: 'asc' }, { createdAt: 'asc' }], include: { items: { orderBy: { order: 'asc' } } } },
+        bookmarks: { orderBy: [{ order: 'asc' }, { createdAt: 'asc' }] },
       },
     });
   }
@@ -144,6 +156,9 @@ export class ProjectService {
         status,
         type,
         githubRepo,
+        isFavorite: data.isFavorite ?? false,
+        color: data.color ?? null,
+        icon: data.icon ?? null,
         ...(settings !== undefined ? { settings } : {}),
       },
       include: {
@@ -163,6 +178,10 @@ export class ProjectService {
         },
         updateLogs: true,
         members: true,
+        links: true,
+        whiteboards: { orderBy: [{ order: 'asc' }, { createdAt: 'asc' }] },
+        checklists: { orderBy: [{ order: 'asc' }, { createdAt: 'asc' }], include: { items: { orderBy: { order: 'asc' } } } },
+        bookmarks: { orderBy: [{ order: 'asc' }, { createdAt: 'asc' }] },
       },
     });
   }
@@ -180,6 +199,10 @@ export class ProjectService {
       type?: ProjectType;
       githubRepo?: string | null;
       settings?: Prisma.InputJsonValue;
+      order?: number;
+      isFavorite?: boolean;
+      color?: string | null;
+      icon?: string | null;
     } = {};
 
     if (data.title !== undefined) {
@@ -226,6 +249,22 @@ export class ProjectService {
       updateData.settings = data.settings as Prisma.InputJsonValue;
     }
 
+    if (data.order !== undefined) {
+      updateData.order = data.order;
+    }
+
+    if (data.isFavorite !== undefined) {
+      updateData.isFavorite = data.isFavorite;
+    }
+
+    if (data.color !== undefined) {
+      updateData.color = data.color === null ? null : String(data.color).trim();
+    }
+
+    if (data.icon !== undefined) {
+      updateData.icon = data.icon === null ? null : String(data.icon).trim();
+    }
+
     try {
       return await prisma.project.update({
         where: { id },
@@ -246,6 +285,10 @@ export class ProjectService {
             orderBy: { createdAt: 'desc' },
           },
           members: true,
+          links: true,
+          whiteboards: { orderBy: [{ order: 'asc' }, { createdAt: 'asc' }] },
+          checklists: { orderBy: [{ order: 'asc' }, { createdAt: 'asc' }], include: { items: { orderBy: { order: 'asc' } } } },
+          bookmarks: { orderBy: [{ order: 'asc' }, { createdAt: 'asc' }] },
         },
       });
     } catch (error: any) {
@@ -329,6 +372,22 @@ export class ProjectService {
       }
       throw error;
     }
+  }
+  async createLink(projectId: string, data: { title: string, url: string, icon?: string | null }) {
+    if (!projectId) throw new ValidationError('Project ID is required');
+    if (!data.title) throw new ValidationError('Title is required');
+    if (!data.url) throw new ValidationError('URL is required');
+    return await prisma.projectLink.create({ data: { ...data, projectId } });
+  }
+
+  async updateLink(id: string, data: { title?: string, url?: string, icon?: string | null }) {
+    if (!id) throw new ValidationError('Link ID is required');
+    return await prisma.projectLink.update({ where: { id }, data });
+  }
+
+  async deleteLink(id: string) {
+    if (!id) throw new ValidationError('Link ID is required');
+    return await prisma.projectLink.delete({ where: { id } });
   }
 }
 

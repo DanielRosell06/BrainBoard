@@ -9,6 +9,8 @@ export interface ProjectListProps {
   onOpenCreateProjectModal: () => void;
   searchQuery?: string;
   onDeleteProject?: (id: string, title: string) => void;
+  onToggleFavorite?: (id: string, isFavorite: boolean) => void;
+  onArchive?: (id: string, title: string) => void;
 }
 
 export const ProjectList: React.FC<ProjectListProps> = ({
@@ -17,27 +19,56 @@ export const ProjectList: React.FC<ProjectListProps> = ({
   onOpenCreateProjectModal,
   searchQuery = '',
   onDeleteProject,
+  onToggleFavorite,
+  onArchive
 }) => {
+  const [activeTab, setActiveTab] = React.useState<'ACTIVE' | 'ARCHIVED'>('ACTIVE');
+
   const filteredProjects = projects.filter((p) => {
+    if (activeTab === 'ARCHIVED' && p.status !== 'ARCHIVED') return false;
+    if (activeTab === 'ACTIVE' && p.status === 'ARCHIVED') return false;
+
     if (!searchQuery.trim()) return true;
     const q = searchQuery.toLowerCase().trim();
     return (
       p.title.toLowerCase().includes(q) ||
       (p.description && p.description.toLowerCase().includes(q))
     );
+  }).sort((a, b) => {
+    // Favoritos primeiro
+    if (a.isFavorite && !b.isFavorite) return -1;
+    if (!a.isFavorite && b.isFavorite) return 1;
+    return 0;
   });
+
+  const activeCount = projects.filter(p => p.status !== 'ARCHIVED').length;
+  const archivedCount = projects.filter(p => p.status === 'ARCHIVED').length;
 
   return (
     <div className="space-y-6">
       {/* Portfolio Header Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200">
         <div>
-          <h2 className="text-xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
-            <span>Seus Projetos</span>
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-900 border border-slate-200">
-              {projects.length}
-            </span>
-          </h2>
+          <div className="flex items-center gap-4 mb-2">
+            <button 
+              onClick={() => setActiveTab('ACTIVE')}
+              className={`text-xl font-extrabold tracking-tight flex items-center gap-2 ${activeTab === 'ACTIVE' ? 'text-slate-900' : 'text-slate-400 hover:text-slate-600'}`}
+            >
+              <span>Ativos</span>
+              <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold border ${activeTab === 'ACTIVE' ? 'bg-slate-100 text-slate-900 border-slate-200' : 'bg-transparent border-slate-200 text-slate-400'}`}>
+                {activeCount}
+              </span>
+            </button>
+            <button 
+              onClick={() => setActiveTab('ARCHIVED')}
+              className={`text-xl font-extrabold tracking-tight flex items-center gap-2 ${activeTab === 'ARCHIVED' ? 'text-slate-900' : 'text-slate-400 hover:text-slate-600'}`}
+            >
+              <span>Arquivados</span>
+              <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold border ${activeTab === 'ARCHIVED' ? 'bg-slate-100 text-slate-900 border-slate-200' : 'bg-transparent border-slate-200 text-slate-400'}`}>
+                {archivedCount}
+              </span>
+            </button>
+          </div>
           <p className="text-xs text-slate-500 mt-0.5">
             Selecione um projeto para visualizar e gerenciar seu quadro de etapas e tarefas
           </p>
@@ -84,6 +115,8 @@ export const ProjectList: React.FC<ProjectListProps> = ({
               project={project}
               onClick={onSelectProject}
               onDelete={onDeleteProject}
+              onToggleFavorite={onToggleFavorite}
+              onArchive={onArchive}
             />
           ))}
         </div>

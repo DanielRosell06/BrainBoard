@@ -1,9 +1,9 @@
-import type { Note } from '@prisma/client';
+import type { Whiteboard } from '@prisma/client';
 import { prisma } from '../../../prisma.js';
 import { ValidationError, NotFoundError } from '../../shared/errors.js';
 
-export class NoteService {
-  async listNotesByProject(projectId: string): Promise<Note[]> {
+export class WhiteboardService {
+  async listWhiteboardsByProject(projectId: string): Promise<Whiteboard[]> {
     if (!projectId || typeof projectId !== 'string') {
       throw new ValidationError('Project ID is required');
     }
@@ -16,23 +16,23 @@ export class NoteService {
       throw new NotFoundError('Project not found');
     }
 
-    return await prisma.note.findMany({
+    return await prisma.whiteboard.findMany({
       where: { projectId },
       orderBy: [{ order: 'asc' }, { createdAt: 'desc' }],
     });
   }
 
-  async getNoteById(id: string): Promise<Note | null> {
+  async getWhiteboardById(id: string): Promise<Whiteboard | null> {
     if (!id || typeof id !== 'string') {
-      throw new ValidationError('Note ID is required');
+      throw new ValidationError('Whiteboard ID is required');
     }
 
-    return await prisma.note.findUnique({
+    return await prisma.whiteboard.findUnique({
       where: { id },
     });
   }
 
-  async createNote(projectId: string, title: string, content: string): Promise<Note> {
+  async createWhiteboard(projectId: string, title: string, data?: any): Promise<Whiteboard> {
     if (!projectId || typeof projectId !== 'string') {
       throw new ValidationError('Project ID is required');
     }
@@ -49,25 +49,21 @@ export class NoteService {
       throw new NotFoundError('Project not found');
     }
 
-    return await prisma.note.create({
+    return await prisma.whiteboard.create({
       data: {
         projectId,
         title: title.trim(),
-        content: content || '',
+        data: data || {},
       },
     });
   }
 
-  async updateNote(id: string, data: { title?: string; content?: string; order?: number }): Promise<Note> {
+  async updateWhiteboard(id: string, data: { title?: string; data?: any; order?: number }): Promise<Whiteboard> {
     if (!id || typeof id !== 'string') {
-      throw new ValidationError('Note ID is required');
+      throw new ValidationError('Whiteboard ID is required');
     }
 
-    const updateData: {
-      title?: string;
-      content?: string;
-      order?: number;
-    } = {};
+    const updateData: any = {};
 
     if (data.title !== undefined) {
       if (typeof data.title !== 'string' || !data.title.trim()) {
@@ -76,8 +72,8 @@ export class NoteService {
       updateData.title = data.title.trim();
     }
 
-    if (data.content !== undefined) {
-      updateData.content = data.content;
+    if (data.data !== undefined) {
+      updateData.data = data.data;
     }
 
     if (data.order !== undefined) {
@@ -85,34 +81,34 @@ export class NoteService {
     }
 
     try {
-      return await prisma.note.update({
+      return await prisma.whiteboard.update({
         where: { id },
         data: updateData,
       });
     } catch (error: any) {
       if (error && typeof error === 'object' && 'code' in error && error.code === 'P2025') {
-        throw new NotFoundError('Note not found');
+        throw new NotFoundError('Whiteboard not found');
       }
       throw error;
     }
   }
 
-  async deleteNote(id: string): Promise<Note> {
+  async deleteWhiteboard(id: string): Promise<Whiteboard> {
     if (!id || typeof id !== 'string') {
-      throw new ValidationError('Note ID is required');
+      throw new ValidationError('Whiteboard ID is required');
     }
 
     try {
-      return await prisma.note.delete({
+      return await prisma.whiteboard.delete({
         where: { id },
       });
     } catch (error: any) {
       if (error && typeof error === 'object' && 'code' in error && error.code === 'P2025') {
-        throw new NotFoundError('Note not found');
+        throw new NotFoundError('Whiteboard not found');
       }
       throw error;
     }
   }
 }
 
-export const noteService = new NoteService();
+export const whiteboardService = new WhiteboardService();

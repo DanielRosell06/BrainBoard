@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { X, Calendar, Clock, MapPin, Loader2 } from 'lucide-react';
 import { appointmentsApi } from '../../services/api';
 
@@ -23,9 +23,11 @@ export const CreateAppointmentModal: React.FC<CreateAppointmentModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
+  const wasOpen = useRef(false);
+
   // Prefill dates on open
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && !wasOpen.current) {
       setTitle('');
       setLocationOrLink('');
       setDescription('');
@@ -43,6 +45,7 @@ export const CreateAppointmentModal: React.FC<CreateAppointmentModalProps> = ({
       setStartTime(formatLocalIso(base));
       setEndTime(formatLocalIso(end));
     }
+    wasOpen.current = isOpen;
   }, [isOpen, defaultDate]);
 
   useEffect(() => {

@@ -16,6 +16,11 @@ import type {
   CreateAppointmentInput,
   UpdateAppointmentInput,
   CalendarEventProjection,
+  Whiteboard,
+  Checklist,
+  ChecklistItem,
+  Bookmark,
+  CreateBookmarkInput,
 } from '../types';
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? '';
@@ -124,7 +129,7 @@ export const kanbansApi = {
   update(
     projectId: string,
     kanbanId: string,
-    input: Partial<import('../types').CreateKanbanInput>
+    input: Partial<import('../types').CreateKanbanInput> & { order?: number }
   ): Promise<import('../types').Kanban> {
     return request(`/api/projects/${projectId}/kanbans/${kanbanId}`, {
       method: 'PATCH',
@@ -200,7 +205,7 @@ export const notesApi = {
   update(
     _projectId: string,
     noteId: string,
-    input: { title?: string; content?: string }
+    input: { title?: string; content?: string; order?: number }
   ): Promise<import('../types').Note> {
     return request(`/api/notes/${noteId}`, {
       method: 'PATCH',
@@ -393,6 +398,41 @@ export const calendarApi = {
 };
 
 
+
+// ============================================================
+// Whiteboards API
+// ============================================================
+export const whiteboardsApi = {
+  list(projectId: string): Promise<Whiteboard[]> { return request(`/api/projects/${projectId}/whiteboards`); },
+  create(projectId: string, input: { title: string; data?: Record<string, unknown> }): Promise<Whiteboard> { return request(`/api/projects/${projectId}/whiteboards`, { method: 'POST', body: JSON.stringify(input) }); },
+  update(_projectId: string, id: string, input: { title?: string; data?: Record<string, unknown>; order?: number }): Promise<Whiteboard> { return request(`/api/whiteboards/${id}`, { method: 'PATCH', body: JSON.stringify(input) }); },
+  delete(_projectId: string, id: string): Promise<void> { return request(`/api/whiteboards/${id}`, { method: 'DELETE' }); },
+};
+
+// ============================================================
+// Checklists API
+// ============================================================
+export const checklistsApi = {
+  list(projectId: string): Promise<Checklist[]> { return request(`/api/projects/${projectId}/checklists`); },
+  get(id: string): Promise<Checklist> { return request(`/api/checklists/${id}`); },
+  create(projectId: string, input: { title: string }): Promise<Checklist> { return request(`/api/projects/${projectId}/checklists`, { method: 'POST', body: JSON.stringify(input) }); },
+  update(id: string, input: { title?: string; order?: number }): Promise<Checklist> { return request(`/api/checklists/${id}`, { method: 'PATCH', body: JSON.stringify(input) }); },
+  delete(id: string): Promise<void> { return request(`/api/checklists/${id}`, { method: 'DELETE' }); },
+  addItem(checklistId: string, text: string): Promise<ChecklistItem> { return request(`/api/checklists/${checklistId}/items`, { method: 'POST', body: JSON.stringify({ text }) }); },
+  toggleItem(itemId: string, isDone: boolean): Promise<ChecklistItem> { return request(`/api/checklist-items/${itemId}/toggle`, { method: 'PATCH', body: JSON.stringify({ isDone }) }); },
+  updateItem(itemId: string, input: { text?: string; order?: number }): Promise<ChecklistItem> { return request(`/api/checklist-items/${itemId}`, { method: 'PATCH', body: JSON.stringify(input) }); },
+  deleteItem(itemId: string): Promise<void> { return request(`/api/checklist-items/${itemId}`, { method: 'DELETE' }); },
+};
+
+// ============================================================
+// Bookmarks API
+// ============================================================
+export const bookmarksApi = {
+  list(projectId: string): Promise<Bookmark[]> { return request(`/api/projects/${projectId}/bookmarks`); },
+  create(projectId: string, input: CreateBookmarkInput): Promise<Bookmark> { return request(`/api/projects/${projectId}/bookmarks`, { method: 'POST', body: JSON.stringify(input) }); },
+  update(id: string, input: Partial<CreateBookmarkInput> & { order?: number }): Promise<Bookmark> { return request(`/api/bookmarks/${id}`, { method: 'PATCH', body: JSON.stringify(input) }); },
+  delete(id: string): Promise<void> { return request(`/api/bookmarks/${id}`, { method: 'DELETE' }); },
+};
 
 // ============================================================
 // Chat API

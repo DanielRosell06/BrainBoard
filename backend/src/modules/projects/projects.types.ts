@@ -10,6 +10,11 @@ import type {
   Subtask,
   ProjectStatus,
   ProjectType,
+  ProjectLink,
+  Whiteboard,
+  Checklist,
+  ChecklistItem,
+  Bookmark,
 } from '@prisma/client';
 
 export type {
@@ -24,6 +29,11 @@ export type {
   Subtask,
   ProjectStatus,
   ProjectType,
+  ProjectLink,
+  Whiteboard,
+  Checklist,
+  ChecklistItem,
+  Bookmark,
 };
 
 export interface CreateProjectInput {
@@ -34,6 +44,9 @@ export interface CreateProjectInput {
   type?: ProjectType | string | undefined;
   githubRepo?: string | null | undefined;
   settings?: any | undefined;
+  isFavorite?: boolean | undefined;
+  color?: string | null | undefined;
+  icon?: string | null | undefined;
 }
 
 export interface UpdateProjectInput {
@@ -44,6 +57,10 @@ export interface UpdateProjectInput {
   type?: ProjectType | string | undefined;
   githubRepo?: string | null | undefined;
   settings?: any | undefined;
+  isFavorite?: boolean | undefined;
+  color?: string | null | undefined;
+  icon?: string | null | undefined;
+  order?: number | undefined;
 }
 
 export interface ProjectFilterOptions {
@@ -56,7 +73,24 @@ export type ProjectWithDetails = Project & {
   notes: Note[];
   updateLogs: UpdateLog[];
   members: Member[];
+  links: ProjectLink[];
+  whiteboards: Whiteboard[];
+  checklists: (Checklist & { items: ChecklistItem[] })[];
+  bookmarks: Bookmark[];
 };
+
+export interface CreateProjectLinkInput {
+  projectId: string;
+  title: string;
+  url: string;
+  icon?: string | null | undefined;
+}
+
+export interface UpdateProjectLinkInput {
+  title?: string | undefined;
+  url?: string | undefined;
+  icon?: string | null | undefined;
+}
 
 export interface CreateKanbanInput {
   projectId: string;
@@ -65,6 +99,7 @@ export interface CreateKanbanInput {
 
 export interface UpdateKanbanInput {
   title?: string | undefined;
+  order?: number | undefined;
 }
 
 export type KanbanWithTasks = Kanban & {

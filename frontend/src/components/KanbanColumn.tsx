@@ -2,6 +2,7 @@ import React from 'react';
 import type { Task, KanbanTag } from '../types';
 import { TaskCard } from './TaskCard';
 import { Trash2 } from 'lucide-react';
+import { Droppable } from '@hello-pangea/dnd';
 
 export interface KanbanColumnProps {
   column: { id: string; title: string };
@@ -16,6 +17,8 @@ export interface KanbanColumnProps {
   onDeleteSubtask?: (id: string) => Promise<void>;
   onOpenCreateTask?: () => void;
   onDeleteColumn?: () => void;
+  onEditTask?: (task: Task) => void;
+  onDuplicateTask?: (task: Task) => void;
 }
 
 export const KanbanColumn: React.FC<KanbanColumnProps> = ({
@@ -30,6 +33,8 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
   onToggleSubtask,
   onDeleteSubtask,
   onDeleteColumn,
+  onEditTask,
+  onDuplicateTask,
 }) => {
   return (
     <div
@@ -59,28 +64,42 @@ export const KanbanColumn: React.FC<KanbanColumnProps> = ({
       </div>
 
       {/* Cards List / Container */}
-      <div className="flex-1 p-4 space-y-4 overflow-y-auto">
-        {tasks.length === 0 ? (
-          <div className="h-44 rounded-xl flex flex-col items-center justify-center text-center">
-            <p className="text-[12px] font-medium text-neutral-400">Vazio</p>
+      <Droppable droppableId={column.id}>
+        {(provided, snapshot) => (
+          <div
+            ref={provided.innerRef}
+            {...provided.droppableProps}
+            className={`flex-1 p-4 flex flex-col gap-4 overflow-y-auto transition-colors ${
+              snapshot.isDraggingOver ? 'bg-slate-100' : ''
+            }`}
+          >
+            {tasks.length === 0 && !snapshot.isDraggingOver ? (
+              <div className="h-44 rounded-xl flex flex-col items-center justify-center text-center">
+                <p className="text-[12px] font-medium text-neutral-400">Vazio</p>
+              </div>
+            ) : (
+              tasks.map((task, index) => (
+                <TaskCard
+                  key={task.id}
+                  task={task}
+                  index={index}
+                  columns={columns}
+                  availableTags={availableTags}
+                  onMoveTask={onMoveTask}
+                  onUpdateTask={onUpdateTask}
+                  onDeleteTask={onDeleteTask}
+                  onAddSubtask={onAddSubtask}
+                  onToggleSubtask={onToggleSubtask}
+                  onDeleteSubtask={onDeleteSubtask}
+                  onEditTask={onEditTask}
+                  onDuplicateTask={onDuplicateTask}
+                />
+              ))
+            )}
+            {provided.placeholder}
           </div>
-        ) : (
-          tasks.map((task) => (
-            <TaskCard
-              key={task.id}
-              task={task}
-              columns={columns}
-              availableTags={availableTags}
-              onMoveTask={onMoveTask}
-              onUpdateTask={onUpdateTask}
-              onDeleteTask={onDeleteTask}
-              onAddSubtask={onAddSubtask}
-              onToggleSubtask={onToggleSubtask}
-              onDeleteSubtask={onDeleteSubtask}
-            />
-          ))
         )}
-      </div>
+      </Droppable>
     </div>
   );
 };

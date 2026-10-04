@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { RichTextEditor } from './RichTextEditor';
 import { notesApi } from '../../services/api';
 import type { Note, Project } from '../../types';
-import { Save, CheckCircle2, Loader2, Clock, FileText } from 'lucide-react';
+import { Save, CheckCircle2, Loader2, Clock, FileText, Edit2, Check, X } from 'lucide-react';
 
 type SaveStatus = 'saved' | 'saving' | 'unsaved' | 'error';
 
@@ -29,10 +29,14 @@ export const NoteEditorView: React.FC<NoteEditorViewProps> = ({
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isMounted = useRef(true);
 
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [editTitle, setEditTitle] = useState(note?.title ?? '');
+
   // Atualizar estado local quando a nota muda (troca de nota)
   useEffect(() => {
     if (note) {
       setTitle(note.title);
+      setEditTitle(note.title);
       setContent(note.content);
       setSaveStatus('saved');
     }
@@ -81,10 +85,11 @@ export const NoteEditorView: React.FC<NoteEditorViewProps> = ({
   );
 
   // Handlers
-  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newTitle = e.target.value;
-    setTitle(newTitle);
-    scheduleAutoSave(newTitle, content);
+  const handleUpdateTitle = () => {
+    if (!editTitle.trim()) return;
+    setTitle(editTitle.trim());
+    setIsEditingTitle(false);
+    scheduleAutoSave(editTitle.trim(), content);
   };
 
   const handleContentUpdate = (html: string) => {
@@ -124,14 +129,49 @@ export const NoteEditorView: React.FC<NoteEditorViewProps> = ({
     <div className="bg-white rounded-2xl shadow-sm border border-neutral-200 flex flex-col min-h-[600px] max-h-[calc(100vh-12rem)]">
       {/* Header: título + status de salvamento */}
       <div className="flex items-center gap-4 px-6 py-4 border-b border-neutral-200">
-        {/* Título editável */}
-        <input
-          type="text"
-          value={title}
-          onChange={handleTitleChange}
-          placeholder="Título da nota..."
-          className="flex-1 text-xl font-bold text-neutral-900 bg-transparent border-none outline-none placeholder-neutral-300 focus:placeholder-neutral-400 transition-colors"
-        />
+        {/* Título */}
+        <div className="flex-1 flex items-center">
+          {isEditingTitle ? (
+            <div className="flex items-center gap-2 flex-1">
+              <input
+                type="text"
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+                className="flex-1 text-xl font-bold bg-neutral-50 border border-neutral-300 rounded-lg px-3 py-1 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleUpdateTitle();
+                  if (e.key === 'Escape') {
+                    setEditTitle(title);
+                    setIsEditingTitle(false);
+                  }
+                }}
+              />
+              <button onClick={handleUpdateTitle} className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg shrink-0">
+                <Check className="w-5 h-5" />
+              </button>
+              <button 
+                onClick={() => {
+                  setEditTitle(title);
+                  setIsEditingTitle(false);
+                }} 
+                className="p-1.5 text-neutral-400 hover:bg-neutral-100 rounded-lg shrink-0"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 group flex-1">
+              <h1 className="text-xl font-bold text-neutral-900 truncate">{title}</h1>
+              <button
+                onClick={() => setIsEditingTitle(true)}
+                className="opacity-0 group-hover:opacity-100 p-1.5 text-neutral-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all shrink-0"
+              >
+                <Edit2 className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+        </div>
 
         {/* Indicador de status de salvamento */}
         <div className="flex items-center gap-1.5 text-xs font-medium shrink-0">

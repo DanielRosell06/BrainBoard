@@ -1,15 +1,16 @@
 import React, { useState } from 'react';
 import type { Project, Task, Kanban } from '../types';
 import { KanbanColumn as KanbanColumnComponent } from './KanbanColumn';
-import { DashboardOverview } from './DashboardOverview';
-import { Plus, X, Tag, LayoutGrid } from 'lucide-react';
+import { EditTaskModal } from './EditTaskModal';
+import { Plus, X, Tag, LayoutGrid, Edit2, Check } from 'lucide-react';
 import { kanbanColumnsApi, kanbanTagsApi } from '../services/api';
+import { DragDropContext, DropResult } from '@hello-pangea/dnd';
 
 export interface KanbanBoardProps {
   project?: Project | null;
   kanban?: Kanban | null;
   tasks: Task[];
-  onMoveTask: (id: string, status: string, columnId?: string | null) => Promise<void>;
+  onMoveTask: (id: string, status: string, columnId?: string | null, destinationIndex?: number) => Promise<void>;
   onUpdateTask?: (taskId: string, updates: Partial<Task>) => Promise<void>;
   onDeleteTask: (id: string) => Promise<void>;
   onAddSubtask: (taskId: string, title: string) => Promise<void>;
@@ -22,6 +23,7 @@ export interface KanbanBoardProps {
 }
 
 export const KanbanBoard: React.FC<KanbanBoardProps> = ({
+  project,
   kanban,
   tasks,
   onMoveTask,
@@ -40,6 +42,16 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   const [newTagName, setNewTagName] = useState('');
   const [newTagColor, setNewTagColor] = useState('#3b82f6');
   const [isCreatingDefaultCols, setIsCreatingDefaultCols] = useState(false);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
+
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [editTitle, setEditTitle] = useState(kanban?.title ?? '');
+
+  React.useEffect(() => {
+    if (kanban) {
+      setEditTitle(kanban.title);
+    }
+  }, [kanban?.title]);
 
   if (!kanban) {
     return <div className="p-8 text-center text-slate-500 font-medium">Selecione um Kanban</div>;
@@ -119,18 +131,116 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
     }
   };
 
+  const handleDragEnd = async (result: DropResult) => {
+    const { source, destination, draggableId } = result;
+    if (!destination) return;
+    
+    // If dropped in the same column and same position, do nothing
+    if (source.droppableId === destination.droppableId && source.index === destination.index) {
+      return;
+    }
+
+    const targetColumn = kanban.columns?.find((c) => c.id === destination.droppableId);
+    if (!targetColumn) return;
+
+    const targetIdx = kanban.columns?.findIndex((c) => c.id === targetColumn.id) || 0;
+    
+    // Helper to calculate status just like in TaskCard
+    const colTitleLower = targetColumn.title.toLowerCase();
+    let newStatus = 'IN_PROGRESS';
+    if (
+      colTitleLower.includes('concluí') ||
+      colTitleLower.includes('conclui') ||
+      colTitleLower.includes('done') ||
+      colTitleLower.includes('finalizad')
+    ) {
+      newStatus = 'DONE';
+    } else if (targetIdx === 0) {
+      newStatus = 'TODO';
+    }
+
+    await onMoveTask(draggableId, newStatus, destination.droppableId, destination.index);
+  };
+
+  const handleDuplicateTask = async (task: Task) => {
+    try {
+      const { tasksApi } = await import('../services/api');
+      await tasksApi.create(kanban.id, {
+        title: `${task.title} (Cópia)`,
+        description: task.description || undefined,
+        status: task.status,
+        columnId: task.columnId || undefined,
+        tagIds: task.tags?.map(t => t.id),
+      });
+      onRefreshKanban();
+    } catch (e) {
+      console.error('Failed to duplicate task:', e);
+      alert('Erro ao duplicar tarefa.');
+    }
+  };
+
+  const handleUpdateTitle = async () => {
+    if (!editTitle.trim() || editTitle === kanban.title) {
+      setIsEditingTitle(false);
+      return;
+    }
+    try {
+      await import('../services/api').then(m => m.kanbansApi.update(project!.id, kanban.id, { title: editTitle.trim() }));
+      onRefreshKanban();
+      setIsEditingTitle(false);
+    } catch (err) {
+      console.error('Failed to update kanban title', err);
+    }
+  };
+
   const existingColumnIds = new Set(kanban.columns?.map((c) => c.id) || []);
 
   return (
     <div className="space-y-6 flex flex-col h-full min-w-0 w-full">
-      <DashboardOverview tasks={tasks} />
 
       {/* Board Header & Controls */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200">
-        <div className="flex items-center gap-4 flex-wrap min-w-0">
-          <div className="flex items-center gap-2 text-lg text-slate-900 font-bold truncate">
-            <span>{kanban.title}</span>
-          </div>
+        <div className="flex items-center gap-4 flex-wrap min-w-0 flex-1">
+          {isEditingTitle ? (
+            <div className="flex items-center gap-2 flex-1">
+              <input
+                type="text"
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+                className="flex-1 text-lg font-bold bg-slate-50 border border-slate-300 rounded-lg px-3 py-1 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleUpdateTitle();
+                  if (e.key === 'Escape') {
+                    setEditTitle(kanban.title);
+                    setIsEditingTitle(false);
+                  }
+                }}
+              />
+              <button onClick={handleUpdateTitle} className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg shrink-0">
+                <Check className="w-5 h-5" />
+              </button>
+              <button 
+                onClick={() => {
+                  setEditTitle(kanban.title);
+                  setIsEditingTitle(false);
+                }} 
+                className="p-1.5 text-slate-400 hover:bg-slate-100 rounded-lg shrink-0"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 group flex-1">
+              <h1 className="text-lg font-bold text-slate-900 truncate">{kanban.title}</h1>
+              <button
+                onClick={() => setIsEditingTitle(true)}
+                className="opacity-0 group-hover:opacity-100 p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all shrink-0"
+              >
+                <Edit2 className="w-4 h-4" />
+              </button>
+            </div>
+          )}
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
@@ -173,7 +283,8 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
       )}
 
       {/* Columns Container */}
-      <div className="flex gap-6 overflow-x-auto pb-6 items-start min-w-0 w-full">
+      <DragDropContext onDragEnd={handleDragEnd}>
+        <div className="flex gap-6 overflow-x-auto pb-6 items-start min-w-0 w-full">
         {kanban.columns?.map((col, index) => {
           // Filter tasks belonging to this column.
           // If first column, also capture tasks with missing/orphan columnId
@@ -197,6 +308,8 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                 onToggleSubtask={onToggleSubtask}
                 onDeleteSubtask={onDeleteSubtask}
                 onDeleteColumn={() => handleDeleteColumn(col.id)}
+                onEditTask={setEditingTask}
+                onDuplicateTask={handleDuplicateTask}
               />
             </div>
           );
@@ -244,7 +357,8 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
             </button>
           )}
         </div>
-      </div>
+        </div>
+      </DragDropContext>
 
       {/* Manage Tags Modal */}
       {isTagsModalOpen && (
@@ -318,6 +432,20 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
             </div>
           </div>
         </div>
+      )}
+
+      {/* Edit Task Modal */}
+      {editingTask && project?.kanbans && onUpdateTask && (
+        <EditTaskModal
+          isOpen={!!editingTask}
+          onClose={() => setEditingTask(null)}
+          kanbans={project.kanbans}
+          task={editingTask}
+          onUpdateTask={async (id, updates) => {
+            await onUpdateTask(id, updates);
+            onRefreshKanban();
+          }}
+        />
       )}
     </div>
   );

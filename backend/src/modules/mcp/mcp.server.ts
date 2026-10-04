@@ -10,13 +10,15 @@ import {
 import { projectToolSchemas, handleProjectTools } from './tools/project.tools.js';
 import { taskToolSchemas, handleTaskTools } from './tools/task.tools.js';
 import { m2ToolSchemas, handleM2Tools } from './tools/m2.tools.js';
-
+import { fullControlToolSchemas, handleFullControlTools } from './tools/full-control.tools.js';
+import { newEntitiesToolSchemas, handleNewEntitiesTools } from './tools/new-entities.tools.js';
 
 export const allMcpTools = [
   ...projectToolSchemas,
   ...taskToolSchemas,
   ...m2ToolSchemas,
-  
+  ...fullControlToolSchemas,
+  ...newEntitiesToolSchemas,
 ];
 
 export function createMcpServer(): Server {
@@ -50,7 +52,11 @@ export function createMcpServer(): Server {
     const m2Result = await handleM2Tools(name, args);
     if (m2Result) return m2Result;
 
-    
+    const fullControlResult = await handleFullControlTools(name, args);
+    if (fullControlResult) return fullControlResult;
+
+    const newEntitiesResult = await handleNewEntitiesTools(name, args);
+    if (newEntitiesResult) return newEntitiesResult;
 
     throw new Error(`Tool unknown: ${name}`);
   });

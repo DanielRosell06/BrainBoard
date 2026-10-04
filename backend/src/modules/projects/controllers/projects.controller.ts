@@ -6,6 +6,9 @@ import { updateLogService } from '../services/update-log.service.js';
 import { memberService } from '../services/member.service.js';
 import { taskService } from '../services/task.service.js';
 import { subtaskService } from '../services/subtask.service.js';
+import { whiteboardService } from '../services/whiteboard.service.js';
+import { checklistService } from '../services/checklist.service.js';
+import { bookmarkService } from '../services/bookmark.service.js';
 import { ValidationError, NotFoundError } from '../../shared/errors.js';
 
 // ==========================================
@@ -96,7 +99,7 @@ export const createProject = async (req: Request, res: Response) => {
 export const updateProject = async (req: Request, res: Response) => {
   try {
     const id = String(req.params.id);
-    const { title, description, businessLogic, status, type, githubRepo, settings } = req.body;
+    const { title, description, businessLogic, status, type, githubRepo, settings, order } = req.body;
 
     if (status !== undefined && !VALID_PROJECT_STATUSES.includes(status)) {
       return res.status(400).json({
@@ -120,6 +123,7 @@ export const updateProject = async (req: Request, res: Response) => {
       type,
       githubRepo,
       settings,
+      order,
     });
     res.json(project);
   } catch (error: any) {
@@ -190,6 +194,49 @@ export const deleteProject = async (req: Request, res: Response) => {
 };
 
 // ==========================================
+// PROJECT LINKS CONTROLLER
+// ==========================================
+
+export const createProjectLink = async (req: Request, res: Response) => {
+  try {
+    const projectId = String(req.params.projectId);
+    const { title, url, icon } = req.body;
+    const link = await projectService.createLink(projectId, { title, url, icon });
+    res.status(201).json(link);
+  } catch (error: any) {
+    if (error instanceof ValidationError) return res.status(400).json({ error: error.message });
+    if (error instanceof NotFoundError) return res.status(404).json({ error: 'Project not found' });
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const updateProjectLink = async (req: Request, res: Response) => {
+  try {
+    const id = String(req.params.id);
+    const { title, url, icon } = req.body;
+    const link = await projectService.updateLink(id, { title, url, icon });
+    res.json(link);
+  } catch (error: any) {
+    if (error instanceof ValidationError) return res.status(400).json({ error: error.message });
+    if (error instanceof NotFoundError) return res.status(404).json({ error: 'Link not found' });
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const deleteProjectLink = async (req: Request, res: Response) => {
+  try {
+    const id = String(req.params.id);
+    await projectService.deleteLink(id);
+    res.status(204).send();
+  } catch (error: any) {
+    if (error instanceof NotFoundError || (error && typeof error === 'object' && 'code' in error && error.code === 'P2025')) {
+      return res.status(404).json({ error: 'Link not found' });
+    }
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// ==========================================
 // KANBANS CONTROLLER
 // ==========================================
 
@@ -253,7 +300,7 @@ export const getKanbanById = async (req: Request, res: Response) => {
 export const updateKanban = async (req: Request, res: Response) => {
   try {
     const id = String(req.params.id);
-    const { title } = req.body;
+    const { title, order } = req.body;
 
     if (title !== undefined && (typeof title !== 'string' || !title.trim())) {
       return res.status(400).json({ error: 'Title cannot be empty' });
@@ -261,6 +308,7 @@ export const updateKanban = async (req: Request, res: Response) => {
 
     const kanban = await kanbanService.updateKanban(id, {
       title,
+      order,
     });
     res.json(kanban);
   } catch (error: any) {
@@ -337,8 +385,8 @@ export const getNoteById = async (req: Request, res: Response) => {
 export const updateNote = async (req: Request, res: Response) => {
   try {
     const id = String(req.params.id);
-    const { title, content } = req.body;
-    const note = await noteService.updateNote(id, { title, content });
+    const { title, content, order } = req.body;
+    const note = await noteService.updateNote(id, { title, content, order });
     res.json(note);
   } catch (error: any) {
     if (error instanceof ValidationError) {
@@ -752,6 +800,250 @@ export const deleteSubtask = async (req: Request, res: Response) => {
     if (error instanceof NotFoundError || (error && typeof error === 'object' && 'code' in error && error.code === 'P2025')) {
       return res.status(404).json({ error: 'Subtask not found' });
     }
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// ==========================================
+// WHITEBOARDS CONTROLLER
+// ==========================================
+
+export const listWhiteboardsByProject = async (req: Request, res: Response) => {
+  try {
+    const projectId = String(req.params.projectId);
+    const items = await whiteboardService.listWhiteboardsByProject(projectId);
+    res.json(items);
+  } catch (error: any) {
+    if (error instanceof ValidationError) return res.status(400).json({ error: error.message });
+    if (error instanceof NotFoundError) return res.status(404).json({ error: error.message });
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const getWhiteboardById = async (req: Request, res: Response) => {
+  try {
+    const id = String(req.params.id);
+    const item = await whiteboardService.getWhiteboardById(id);
+    if (!item) return res.status(404).json({ error: 'Whiteboard not found' });
+    res.json(item);
+  } catch (error: any) {
+    if (error instanceof ValidationError) return res.status(400).json({ error: error.message });
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const createWhiteboard = async (req: Request, res: Response) => {
+  try {
+    const projectId = String(req.params.projectId);
+    const { title, data } = req.body;
+    const item = await whiteboardService.createWhiteboard(projectId, title, data);
+    res.status(201).json(item);
+  } catch (error: any) {
+    if (error instanceof ValidationError) return res.status(400).json({ error: error.message });
+    if (error instanceof NotFoundError) return res.status(404).json({ error: error.message });
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const updateWhiteboard = async (req: Request, res: Response) => {
+  try {
+    const id = String(req.params.id);
+    const item = await whiteboardService.updateWhiteboard(id, req.body);
+    res.json(item);
+  } catch (error: any) {
+    if (error instanceof ValidationError) return res.status(400).json({ error: error.message });
+    if (error instanceof NotFoundError || (error && error.code === 'P2025')) return res.status(404).json({ error: 'Whiteboard not found' });
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const deleteWhiteboard = async (req: Request, res: Response) => {
+  try {
+    const id = String(req.params.id);
+    await whiteboardService.deleteWhiteboard(id);
+    res.status(204).send();
+  } catch (error: any) {
+    if (error instanceof ValidationError) return res.status(400).json({ error: error.message });
+    if (error instanceof NotFoundError || (error && error.code === 'P2025')) return res.status(404).json({ error: 'Whiteboard not found' });
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// ==========================================
+// CHECKLISTS CONTROLLER
+// ==========================================
+
+export const listChecklistsByProject = async (req: Request, res: Response) => {
+  try {
+    const projectId = String(req.params.projectId);
+    const items = await checklistService.listChecklistsByProject(projectId);
+    res.json(items);
+  } catch (error: any) {
+    if (error instanceof ValidationError) return res.status(400).json({ error: error.message });
+    if (error instanceof NotFoundError) return res.status(404).json({ error: error.message });
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const getChecklistById = async (req: Request, res: Response) => {
+  try {
+    const id = String(req.params.id);
+    const item = await checklistService.getChecklistById(id);
+    if (!item) return res.status(404).json({ error: 'Checklist not found' });
+    res.json(item);
+  } catch (error: any) {
+    if (error instanceof ValidationError) return res.status(400).json({ error: error.message });
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const createChecklist = async (req: Request, res: Response) => {
+  try {
+    const projectId = String(req.params.projectId);
+    const { title } = req.body;
+    const item = await checklistService.createChecklist(projectId, title);
+    res.status(201).json(item);
+  } catch (error: any) {
+    if (error instanceof ValidationError) return res.status(400).json({ error: error.message });
+    if (error instanceof NotFoundError) return res.status(404).json({ error: error.message });
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const updateChecklist = async (req: Request, res: Response) => {
+  try {
+    const id = String(req.params.id);
+    const item = await checklistService.updateChecklist(id, req.body);
+    res.json(item);
+  } catch (error: any) {
+    if (error instanceof ValidationError) return res.status(400).json({ error: error.message });
+    if (error instanceof NotFoundError || (error && error.code === 'P2025')) return res.status(404).json({ error: 'Checklist not found' });
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const deleteChecklist = async (req: Request, res: Response) => {
+  try {
+    const id = String(req.params.id);
+    await checklistService.deleteChecklist(id);
+    res.status(204).send();
+  } catch (error: any) {
+    if (error instanceof ValidationError) return res.status(400).json({ error: error.message });
+    if (error instanceof NotFoundError || (error && error.code === 'P2025')) return res.status(404).json({ error: 'Checklist not found' });
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const addChecklistItem = async (req: Request, res: Response) => {
+  try {
+    const checklistId = String(req.params.id);
+    const { text } = req.body;
+    const item = await checklistService.addItem(checklistId, text);
+    res.status(201).json(item);
+  } catch (error: any) {
+    if (error instanceof ValidationError) return res.status(400).json({ error: error.message });
+    if (error instanceof NotFoundError) return res.status(404).json({ error: error.message });
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const updateChecklistItem = async (req: Request, res: Response) => {
+  try {
+    const id = String(req.params.id);
+    const item = await checklistService.updateItem(id, req.body);
+    res.json(item);
+  } catch (error: any) {
+    if (error instanceof ValidationError) return res.status(400).json({ error: error.message });
+    if (error instanceof NotFoundError || (error && error.code === 'P2025')) return res.status(404).json({ error: 'Checklist item not found' });
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const toggleChecklistItem = async (req: Request, res: Response) => {
+  try {
+    const id = String(req.params.id);
+    const { isDone } = req.body;
+    const item = await checklistService.toggleItem(id, isDone);
+    res.json(item);
+  } catch (error: any) {
+    if (error instanceof ValidationError) return res.status(400).json({ error: error.message });
+    if (error instanceof NotFoundError || (error && error.code === 'P2025')) return res.status(404).json({ error: 'Checklist item not found' });
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const deleteChecklistItem = async (req: Request, res: Response) => {
+  try {
+    const id = String(req.params.id);
+    await checklistService.deleteItem(id);
+    res.status(204).send();
+  } catch (error: any) {
+    if (error instanceof ValidationError) return res.status(400).json({ error: error.message });
+    if (error instanceof NotFoundError || (error && error.code === 'P2025')) return res.status(404).json({ error: 'Checklist item not found' });
+    res.status(500).json({ error: error.message });
+  }
+};
+
+// ==========================================
+// BOOKMARKS CONTROLLER
+// ==========================================
+
+export const listBookmarksByProject = async (req: Request, res: Response) => {
+  try {
+    const projectId = String(req.params.projectId);
+    const items = await bookmarkService.listBookmarksByProject(projectId);
+    res.json(items);
+  } catch (error: any) {
+    if (error instanceof ValidationError) return res.status(400).json({ error: error.message });
+    if (error instanceof NotFoundError) return res.status(404).json({ error: error.message });
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const getBookmarkById = async (req: Request, res: Response) => {
+  try {
+    const id = String(req.params.id);
+    const item = await bookmarkService.getBookmarkById(id);
+    if (!item) return res.status(404).json({ error: 'Bookmark not found' });
+    res.json(item);
+  } catch (error: any) {
+    if (error instanceof ValidationError) return res.status(400).json({ error: error.message });
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const createBookmark = async (req: Request, res: Response) => {
+  try {
+    const projectId = String(req.params.projectId);
+    const item = await bookmarkService.createBookmark(projectId, req.body);
+    res.status(201).json(item);
+  } catch (error: any) {
+    if (error instanceof ValidationError) return res.status(400).json({ error: error.message });
+    if (error instanceof NotFoundError) return res.status(404).json({ error: error.message });
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const updateBookmark = async (req: Request, res: Response) => {
+  try {
+    const id = String(req.params.id);
+    const item = await bookmarkService.updateBookmark(id, req.body);
+    res.json(item);
+  } catch (error: any) {
+    if (error instanceof ValidationError) return res.status(400).json({ error: error.message });
+    if (error instanceof NotFoundError || (error && error.code === 'P2025')) return res.status(404).json({ error: 'Bookmark not found' });
+    res.status(500).json({ error: error.message });
+  }
+};
+
+export const deleteBookmark = async (req: Request, res: Response) => {
+  try {
+    const id = String(req.params.id);
+    await bookmarkService.deleteBookmark(id);
+    res.status(204).send();
+  } catch (error: any) {
+    if (error instanceof ValidationError) return res.status(400).json({ error: error.message });
+    if (error instanceof NotFoundError || (error && error.code === 'P2025')) return res.status(404).json({ error: 'Bookmark not found' });
     res.status(500).json({ error: error.message });
   }
 };

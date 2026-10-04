@@ -23,7 +23,7 @@ export class KanbanService {
 
     return await prisma.kanban.findMany({
       where: { projectId },
-      orderBy: { createdAt: 'asc' },
+      orderBy: [{ order: 'asc' }, { createdAt: 'asc' }],
       include: {
         columns: true,
         tags: true,
@@ -109,6 +109,7 @@ export class KanbanService {
 
     const updateData: {
       title?: string;
+      order?: number;
     } = {};
 
     if (data.title !== undefined) {
@@ -116,6 +117,10 @@ export class KanbanService {
         throw new ValidationError('Title cannot be empty');
       }
       updateData.title = data.title.trim();
+    }
+
+    if (data.order !== undefined) {
+      updateData.order = data.order;
     }
 
     try {

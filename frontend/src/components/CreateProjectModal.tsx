@@ -17,6 +17,8 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
   const [description, setDescription] = useState('');
   const [githubRepo, setGithubRepo] = useState('');
   const [businessLogic, setBusinessLogic] = useState('');
+  const [color, setColor] = useState('#3b82f6'); // default blue
+  const [icon, setIcon] = useState('📁');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -26,6 +28,8 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
       setDescription('');
       setGithubRepo('');
       setBusinessLogic('');
+      setColor('#3b82f6');
+      setIcon('📁');
       setErrorMessage('');
     }
   }, [isOpen]);
@@ -57,6 +61,8 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
         description: description.trim() || undefined,
         githubRepo: githubRepo.trim() || undefined,
         businessLogic: businessLogic.trim() || undefined,
+        color,
+        icon,
       });
       onClose();
     } catch (err: any) {
@@ -122,6 +128,39 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({
             />
           </div>
 
+
+          {/* Color and Icon Picker */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="block text-sm font-semibold text-slate-700">Cor</label>
+              <div className="flex flex-wrap gap-2">
+                {['#ef4444', '#f97316', '#f59e0b', '#10b981', '#3b82f6', '#6366f1', '#8b5cf6', '#ec4899', '#64748b'].map(c => (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => setColor(c)}
+                    className={`w-8 h-8 rounded-full border-2 ${color === c ? 'border-slate-900 scale-110' : 'border-transparent hover:scale-110'} transition-transform`}
+                    style={{ backgroundColor: c }}
+                  />
+                ))}
+              </div>
+            </div>
+            <div className="space-y-2">
+              <label className="block text-sm font-semibold text-slate-700">Ícone</label>
+              <div className="flex flex-wrap gap-2">
+                {['📁', '🚀', '⭐', '🔥', '💡', '🎯', '⚡', '🛠️', '🎨'].map(i => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => setIcon(i)}
+                    className={`w-8 h-8 flex items-center justify-center rounded-lg text-lg ${icon === i ? 'bg-slate-200 border border-slate-300' : 'bg-slate-50 border border-slate-100 hover:bg-slate-100'} transition-colors`}
+                  >
+                    {i}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
 
           {/* Description Field */}
           <div className="space-y-2">

@@ -62,6 +62,31 @@ projectsRouter.patch('/api/subtasks/:id', controller.toggleSubtask);
 projectsRouter.patch('/api/subtasks/:id/toggle', controller.toggleSubtask);
 projectsRouter.delete('/api/subtasks/:id', controller.deleteSubtask);
 
+// Whiteboards
+projectsRouter.get('/api/projects/:projectId/whiteboards', controller.listWhiteboardsByProject);
+projectsRouter.post('/api/projects/:projectId/whiteboards', controller.createWhiteboard);
+projectsRouter.get('/api/whiteboards/:id', controller.getWhiteboardById);
+projectsRouter.patch('/api/whiteboards/:id', controller.updateWhiteboard);
+projectsRouter.delete('/api/whiteboards/:id', controller.deleteWhiteboard);
+
+// Checklists
+projectsRouter.get('/api/projects/:projectId/checklists', controller.listChecklistsByProject);
+projectsRouter.post('/api/projects/:projectId/checklists', controller.createChecklist);
+projectsRouter.get('/api/checklists/:id', controller.getChecklistById);
+projectsRouter.patch('/api/checklists/:id', controller.updateChecklist);
+projectsRouter.delete('/api/checklists/:id', controller.deleteChecklist);
+projectsRouter.post('/api/checklists/:id/items', controller.addChecklistItem);
+projectsRouter.patch('/api/checklist-items/:id', controller.updateChecklistItem);
+projectsRouter.patch('/api/checklist-items/:id/toggle', controller.toggleChecklistItem);
+projectsRouter.delete('/api/checklist-items/:id', controller.deleteChecklistItem);
+
+// Bookmarks
+projectsRouter.get('/api/projects/:projectId/bookmarks', controller.listBookmarksByProject);
+projectsRouter.post('/api/projects/:projectId/bookmarks', controller.createBookmark);
+projectsRouter.get('/api/bookmarks/:id', controller.getBookmarkById);
+projectsRouter.patch('/api/bookmarks/:id', controller.updateBookmark);
+projectsRouter.delete('/api/bookmarks/:id', controller.deleteBookmark);
+
 // Kanban Customization
 import * as customizationController from './controllers/kanban-customization.controller.js';
 

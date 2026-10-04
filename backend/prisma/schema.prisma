@@ -11,9 +11,8 @@ enum ProjectStatus {
   PLANNING
   ACTIVE
   COMPLETED
+  ARCHIVED
 }
-
-
 
 enum StageStatus {
   PLANNING
@@ -34,19 +33,28 @@ model Project {
   type          ProjectType   @default(SOFTWARE)
   githubRepo    String?
   settings      Json?
+  order         Int           @default(0)
+  isFavorite    Boolean       @default(false)
+  color         String?
+  icon          String?
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 
-  updateLogs UpdateLog[]
-  members    Member[]
-  kanbans    Kanban[]
-  notes      Note[]
+  updateLogs  UpdateLog[]
+  members     Member[]
+  kanbans     Kanban[]
+  notes       Note[]
+  links       ProjectLink[]
+  whiteboards Whiteboard[]
+  checklists  Checklist[]
+  bookmarks   Bookmark[]
 }
 
 model Kanban {
   id        String         @id @default(uuid())
   title     String
   projectId String
+  order     Int            @default(0)
   project   Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
   columns   KanbanColumn[]
   tags      KanbanTag[]
@@ -82,12 +90,11 @@ model Note {
   title     String
   content   String   @db.Text
   projectId String
+  order     Int      @default(0)
   project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
-
-
 
 model UpdateLog {
   id        String   @id @default(uuid())
@@ -149,16 +156,6 @@ model Appointment {
   updatedAt      DateTime  @updatedAt
 }
 
-
-
-
-
-
-
-
-
-
-
 model ChatConversation {
   id        String        @id @default(uuid())
   title     String        @default("Nova conversa")
@@ -176,3 +173,69 @@ model ChatMessage {
   createdAt      DateTime         @default(now())
 }
 
+model ProjectLink {
+  id        String   @id @default(uuid())
+  title     String
+  url       String
+  icon      String?
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ============================================================
+// NEW: Whiteboard (freeform visual canvas)
+// ============================================================
+model Whiteboard {
+  id        String   @id @default(uuid())
+  title     String
+  data      Json     @default("{}")
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ============================================================
+// NEW: Checklist (standalone checklists)
+// ============================================================
+model Checklist {
+  id        String          @id @default(uuid())
+  title     String
+  projectId String
+  project   Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  items     ChecklistItem[]
+  order     Int             @default(0)
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+}
+
+model ChecklistItem {
+  id          String    @id @default(uuid())
+  text        String
+  isDone      Boolean   @default(false)
+  order       Int       @default(0)
+  checklistId String
+  checklist   Checklist @relation(fields: [checklistId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+// ============================================================
+// NEW: Bookmark (link collection per project)
+// ============================================================
+model Bookmark {
+  id          String   @id @default(uuid())
+  title       String
+  url         String
+  description String?
+  group       String?
+  icon        String?
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

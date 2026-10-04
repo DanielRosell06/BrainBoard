@@ -1,24 +1,21 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Loader2, CheckSquare, Plus, Tag as TagIcon } from 'lucide-react';
-import type { Kanban, CreateTaskInput } from '../types';
+import { X, Loader2, CheckSquare, Tag as TagIcon } from 'lucide-react';
+import type { Kanban, Task, UpdateTaskInput } from '../types';
 
-export interface CreateTaskModalProps {
+export interface EditTaskModalProps {
   isOpen: boolean;
   onClose: () => void;
   kanbans: Kanban[];
-  defaultKanbanId?: string;
-  defaultColumnId?: string;
-  onCreateTask: (kanbanId: string, input: CreateTaskInput, initialSubtasks?: string[]) => Promise<void>;
-  defaultCategory?: string;
+  task: Task;
+  onUpdateTask: (taskId: string, updates: UpdateTaskInput) => Promise<void>;
 }
 
-export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
+export const EditTaskModal: React.FC<EditTaskModalProps> = ({
   isOpen,
   onClose,
   kanbans,
-  defaultKanbanId,
-  defaultColumnId,
-  onCreateTask,
+  task,
+  onUpdateTask,
 }) => {
   const [title, setTitle] = useState('');
   const [selectedKanbanId, setSelectedKanbanId] = useState<string>('');
@@ -26,46 +23,25 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
   const [description, setDescription] = useState('');
   const [dueDate, setDueDate] = useState('');
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
-  const [subtasks, setSubtasks] = useState<string[]>([]);
-  const [newSubtaskInput, setNewSubtaskInput] = useState('');
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
   const wasOpen = useRef(false);
 
-  // Sync default kanban and reset fields ONLY when modal opens
+  // Sync fields when modal opens
   useEffect(() => {
-    if (isOpen && !wasOpen.current) {
-      setTitle('');
-      setDescription('');
-      setDueDate('');
+    if (isOpen) {
+      setTitle(task.title || '');
+      setDescription(task.description || '');
+      setDueDate(task.dueDate ? new Date(task.dueDate).toISOString().slice(0, 10) : '');
       setErrorMessage('');
-      setSelectedTagIds([]);
-      setSubtasks([]);
-      setNewSubtaskInput('');
-
-      let targetKanbanId = '';
-      if (defaultKanbanId && kanbans.some((k) => k.id === defaultKanbanId)) {
-        targetKanbanId = defaultKanbanId;
-      } else if (kanbans.length > 0) {
-        targetKanbanId = kanbans[0].id;
-      }
-
-      setSelectedKanbanId(targetKanbanId);
-
-      const kanbanObj = kanbans.find((k) => k.id === targetKanbanId);
-      if (defaultColumnId && kanbanObj?.columns?.some((c) => c.id === defaultColumnId)) {
-        setColumnId(defaultColumnId);
-      } else if (kanbanObj?.columns && kanbanObj.columns.length > 0) {
-        setColumnId(kanbanObj.columns[0].id);
-      } else {
-        setColumnId('');
-      }
+      setSelectedTagIds(task.tags ? task.tags.map(t => t.id) : []);
+      setSelectedKanbanId(task.kanbanId || '');
+      setColumnId(task.columnId || '');
     }
-
     wasOpen.current = isOpen;
-  }, [isOpen, defaultKanbanId, defaultColumnId, kanbans]);
+  }, [isOpen, task]);
 
   // When selected kanban changes, update default columnId
   const handleKanbanChange = (newKanbanId: string) => {
@@ -94,17 +70,6 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
 
   const currentKanban = kanbans.find((k) => k.id === selectedKanbanId);
 
-  const handleAddSubtaskItem = () => {
-    const trimmed = newSubtaskInput.trim();
-    if (!trimmed) return;
-    setSubtasks((prev) => [...prev, trimmed]);
-    setNewSubtaskInput('');
-  };
-
-  const handleRemoveSubtaskItem = (index: number) => {
-    setSubtasks((prev) => prev.filter((_, i) => i !== index));
-  };
-
   const handleToggleTagSelect = (tagId: string) => {
     setSelectedTagIds((prev) =>
       prev.includes(tagId) ? prev.filter((id) => id !== tagId) : [...prev, tagId]
@@ -130,7 +95,7 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
 
     try {
       // Determine status from column title if possible
-      let status = 'TODO';
+      let status = task.status;
       if (columnId && currentKanban?.columns) {
         const targetCol = currentKanban.columns.find((c) => c.id === columnId);
         if (targetCol) {
@@ -148,25 +113,27 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
             colTitleLower.includes('fazi')
           ) {
             status = 'IN_PROGRESS';
+          } else {
+            status = 'TODO';
           }
         }
       }
 
-      await onCreateTask(
-        selectedKanbanId,
-        {
-          title: cleanTitle,
-          description: description.trim() || undefined,
-          status,
-          columnId: columnId || undefined,
-          tagIds: selectedTagIds.length > 0 ? selectedTagIds : undefined,
-          dueDate: dueDate ? new Date(dueDate).toISOString() : undefined,
-        },
-        subtasks
-      );
+      // Find the actual tag objects for optimistic update
+      const tagObjects = currentKanban?.tags?.filter(t => selectedTagIds.includes(t.id)) || [];
+
+      await onUpdateTask(task.id, {
+        title: cleanTitle,
+        description: description.trim() || null,
+        status,
+        columnId: columnId || null,
+        kanbanId: selectedKanbanId,
+        tags: tagObjects,
+        dueDate: dueDate ? new Date(dueDate).toISOString() : null,
+      } as any);
       onClose();
     } catch (err: any) {
-      setErrorMessage(err.message || 'Erro ao criar tarefa. Tente novamente.');
+      setErrorMessage(err.message || 'Erro ao atualizar tarefa. Tente novamente.');
     } finally {
       setIsSubmitting(false);
     }
@@ -186,10 +153,10 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
             </div>
             <div>
               <h2 className="text-lg font-bold text-slate-900 leading-tight">
-                Nova tarefa
+                Editar tarefa
               </h2>
               <p className="text-sm text-slate-500 mt-0.5">
-                Adicione uma nova atividade ao quadro
+                Atualize as informações da tarefa
               </p>
             </div>
           </div>
@@ -333,58 +300,6 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
               </div>
             )}
 
-            {/* Initial Subtasks Checklist */}
-            <div className="space-y-2">
-              <label className="block text-sm font-semibold text-slate-700">
-                Subtarefas <span className="text-slate-400 font-normal">(Opcional)</span>
-              </label>
-              
-              {subtasks.length > 0 && (
-                <div className="space-y-1.5 max-h-32 overflow-y-auto">
-                  {subtasks.map((st, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center justify-between p-2 px-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-700 font-medium"
-                    >
-                      <span className="truncate">{st}</span>
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveSubtaskItem(index)}
-                        className="text-slate-400 hover:text-rose-500 p-0.5 rounded transition-colors"
-                      >
-                        <X className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  value={newSubtaskInput}
-                  onChange={(e) => setNewSubtaskInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      handleAddSubtaskItem();
-                    }
-                  }}
-                  placeholder="Nova subtarefa..."
-                  className="flex-1 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:bg-white focus:border-slate-900 focus:outline-none transition-all"
-                />
-                <button
-                  type="button"
-                  onClick={handleAddSubtaskItem}
-                  disabled={!newSubtaskInput.trim()}
-                  className="px-3 py-2 bg-slate-100 hover:bg-slate-200 disabled:opacity-50 text-slate-700 text-xs font-semibold rounded-xl transition-colors flex items-center gap-1"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>Adicionar</span>
-                </button>
-              </div>
-            </div>
-
             {/* Due Date Option */}
             <div className="space-y-1.5">
               <label htmlFor="task-due" className="block text-sm font-semibold text-slate-700">
@@ -421,7 +336,7 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
                   <span>Salvando...</span>
                 </>
               ) : (
-                <span>Salvar Tarefa</span>
+                <span>Salvar Alterações</span>
               )}
             </button>
           </div>
