@@ -1,4 +1,4 @@
-﻿import type { KanbanColumn, KanbanTag } from '@prisma/client';
+import type { KanbanColumn, KanbanTag } from '@prisma/client';
 import { prisma } from '../../../prisma.js';
 
 export class KanbanCustomizationService {
@@ -17,15 +17,14 @@ export class KanbanCustomizationService {
     return await prisma.kanbanColumn.delete({ where: { id } });
   }
   
-  async addTag(kanbanId: string, name: string, color?: string): Promise<KanbanTag> {
+  async addTag(kanbanId: string, name: string): Promise<KanbanTag> {
     return await prisma.kanbanTag.create({
-      data: { kanbanId, name, color: color || '#3b82f6' }
+      data: { kanbanId, name }
     });
   }
-  async updateTag(id: string, name?: string, color?: string): Promise<KanbanTag> {
+  async updateTag(id: string, name?: string): Promise<KanbanTag> {
     const data: any = {};
     if (name !== undefined) data.name = name;
-    if (color !== undefined) data.color = color;
     return await prisma.kanbanTag.update({ where: { id }, data });
   }
   async removeTag(id: string): Promise<KanbanTag> {

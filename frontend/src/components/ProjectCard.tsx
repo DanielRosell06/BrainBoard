@@ -29,7 +29,6 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
     <div className={`group relative w-full text-left rounded-2xl p-6 border shadow-card hover:shadow-card-hover transition-all duration-250 ${
       isArchived ? 'bg-neutral-50 border-neutral-200 opacity-70' : 'bg-white border-neutral-200'
     }`}
-      style={project.color && !isArchived ? { borderTop: `4px solid ${project.color}` } : {}}
     >
       {/* Clickable Area */}
       <button
@@ -44,7 +43,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
         <div className="flex items-start justify-between gap-3 mb-4">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
-              <span className="text-xl">{project.icon || '📁'}</span>
+              <span className="text-xl">📁</span>
               <h3 className="text-base font-medium text-neutral-900 truncate cursor-pointer" onClick={() => onClick(project.id)}>
                 {project.title}
               </h3>

@@ -40,11 +40,6 @@ export const AppShell: React.FC = () => {
     isCreateAppointmentModalOpen,
     createTaskDefaultStageId,
     setSearchQuery,
-    setActiveKanbanId,
-    setActiveNoteId,
-    setActiveWhiteboardId,
-    setActiveChecklistId,
-    setActiveChatId,
     setIsCreateTaskModalOpen,
     setIsCreateProjectModalOpen,
     setIsCreateKanbanModalOpen,
@@ -90,49 +85,14 @@ export const AppShell: React.FC = () => {
       {/* Lateral Sidebar */}
       <Navbar
         currentView={currentView}
-        onSelectView={(view) => {
-          if (view === 'PROJECTS') navigate('/projects');
-          else if (view === 'CALENDAR') navigate('/calendar');
-          else if (view === 'CHAT') navigate('/chat');
-          else if (view === 'BOARD' && activeProjectId && activeKanbanId)
-            navigate(`/projects/${activeProjectId}/kanban/${activeKanbanId}`);
-          else if (view === 'NOTE' && activeProjectId && activeNoteId)
-            navigate(`/projects/${activeProjectId}/notes/${activeNoteId}`);
-          else if (view === 'CHECKLIST' && activeProjectId && activeChecklistId)
-            navigate(`/projects/${activeProjectId}/checklists/${activeChecklistId}`);
-          else if (view === 'WHITEBOARD' && activeProjectId && activeWhiteboardId)
-            navigate(`/projects/${activeProjectId}/whiteboards/${activeWhiteboardId}`);
-          else if (view === 'PROJECT_OVERVIEW' && activeProjectId)
-            navigate(`/projects/${activeProjectId}`);
-        }}
         projects={projects}
         loadProjects={loadProjects}
         activeProjectId={activeProjectId}
         onSelectProject={handleSelectProject}
         activeKanbanId={activeKanbanId}
-        onSelectKanban={(kId) => {
-          setActiveKanbanId(kId);
-          if (activeProjectId && kId)
-            navigate(`/projects/${activeProjectId}/kanban/${kId}`);
-        }}
         activeNoteId={activeNoteId}
-        onSelectNote={(nId) => {
-          setActiveNoteId(nId);
-          if (activeProjectId && nId)
-            navigate(`/projects/${activeProjectId}/notes/${nId}`);
-        }}
         activeChecklistId={activeChecklistId}
-        onSelectChecklist={(cId: string | null) => {
-          setActiveChecklistId(cId);
-          if (activeProjectId && cId)
-            navigate(`/projects/${activeProjectId}/checklists/${cId}`);
-        }}
         activeWhiteboardId={activeWhiteboardId}
-        onSelectWhiteboard={(wId: string | null) => {
-          setActiveWhiteboardId(wId);
-          if (activeProjectId && wId)
-            navigate(`/projects/${activeProjectId}/whiteboards/${wId}`);
-        }}
         onOpenCreateProjectModal={() => setIsCreateProjectModalOpen(true)}
         onOpenCreateModal={() => handleOpenCreateTask()}
         onOpenCreateKanban={() => setIsCreateKanbanModalOpen(true)}
@@ -140,10 +100,6 @@ export const AppShell: React.FC = () => {
         isConnected={isConnected}
         calendarCount={calendarCount}
         activeChatId={activeChatId}
-        onSelectChat={(id) => {
-          setActiveChatId(id);
-          navigate(`/chat/${id}`);
-        }}
       />
 
       {/* Main Content Viewport */}

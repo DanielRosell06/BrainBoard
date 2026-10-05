@@ -34,7 +34,7 @@ export class BookmarkService {
 
   async createBookmark(
     projectId: string,
-    data: { title: string; url: string; description?: string; group?: string; icon?: string }
+    data: { title: string; url: string; description?: string; group?: string }
   ): Promise<Bookmark> {
     if (!projectId || typeof projectId !== 'string') {
       throw new ValidationError('Project ID is required');
@@ -63,14 +63,13 @@ export class BookmarkService {
         url: data.url.trim(),
         description: data.description ?? null,
         group: data.group ?? null,
-        icon: data.icon ?? null,
       },
     });
   }
 
   async updateBookmark(
     id: string,
-    data: { title?: string; url?: string; description?: string; group?: string; icon?: string; order?: number }
+    data: { title?: string; url?: string; description?: string; group?: string; order?: number }
   ): Promise<Bookmark> {
     if (!id || typeof id !== 'string') {
       throw new ValidationError('Bookmark ID is required');
@@ -98,10 +97,6 @@ export class BookmarkService {
 
     if (data.group !== undefined) {
       updateData.group = data.group;
-    }
-
-    if (data.icon !== undefined) {
-      updateData.icon = data.icon;
     }
 
     if (data.order !== undefined) {

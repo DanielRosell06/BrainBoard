@@ -115,7 +115,7 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({ editor }) => {
   const isLinkActive = editor.isActive('link');
 
   return (
-    <div className="flex items-center gap-0.5 flex-wrap px-3 py-2 border-b border-neutral-200 bg-neutral-50/80">
+    <div className="flex items-center gap-0.5 flex-wrap px-8 py-2 sticky top-0 z-10 bg-neutral-50/80 backdrop-blur-sm">
       {/* Formatação de texto */}
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleBold().run()}

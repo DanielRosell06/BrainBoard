@@ -19,7 +19,6 @@ export interface KanbanColumn {
 export interface KanbanTag {
   id: string;
   name: string;
-  color: string;
   kanbanId: string;
 }
 
@@ -100,7 +99,6 @@ export interface ProjectLink {
   id: string;
   title: string;
   url: string;
-  icon?: string | null;
   projectId: string;
   createdAt: string;
   updatedAt: string;
@@ -118,8 +116,6 @@ export interface Project {
   settings: Record<string, unknown> | null;
   order: number;
   isFavorite: boolean;
-  color?: string | null;
-  icon?: string | null;
   whiteboards: Whiteboard[];
   checklists: Checklist[];
   bookmarks: Bookmark[];
@@ -142,8 +138,6 @@ export interface ProjectSummary {
   githubRepo: string | null;
   order: number;
   isFavorite: boolean;
-  color?: string | null;
-  icon?: string | null;
   createdAt: string;
   updatedAt: string;
   kanbans?: Kanban[];
@@ -198,7 +192,6 @@ export interface Bookmark {
   url: string;
   description: string | null;
   group: string | null;
-  icon: string | null;
   projectId: string;
   order: number;
   createdAt: string;
@@ -208,7 +201,7 @@ export interface Bookmark {
 // ---- Input types -------------------------------------------
 export interface CreateWhiteboardInput { title: string; data?: Record<string, unknown>; }
 export interface CreateChecklistInput { title: string; }
-export interface CreateBookmarkInput { title: string; url: string; description?: string; group?: string; icon?: string; }
+export interface CreateBookmarkInput { title: string; url: string; description?: string; group?: string; }
 
 export interface CreateProjectInput {
   title: string;
@@ -219,8 +212,6 @@ export interface CreateProjectInput {
   githubRepo?: string;
   settings?: Record<string, unknown>;
   isFavorite?: boolean;
-  color?: string | null;
-  icon?: string | null;
 }
 
 // DRY: todos os campos de criação são opcionais na atualização

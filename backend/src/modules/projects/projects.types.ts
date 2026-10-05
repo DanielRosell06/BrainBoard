@@ -45,8 +45,6 @@ export interface CreateProjectInput {
   githubRepo?: string | null | undefined;
   settings?: any | undefined;
   isFavorite?: boolean | undefined;
-  color?: string | null | undefined;
-  icon?: string | null | undefined;
 }
 
 export interface UpdateProjectInput {
@@ -58,8 +56,6 @@ export interface UpdateProjectInput {
   githubRepo?: string | null | undefined;
   settings?: any | undefined;
   isFavorite?: boolean | undefined;
-  color?: string | null | undefined;
-  icon?: string | null | undefined;
   order?: number | undefined;
 }
 
@@ -83,13 +79,11 @@ export interface CreateProjectLinkInput {
   projectId: string;
   title: string;
   url: string;
-  icon?: string | null | undefined;
 }
 
 export interface UpdateProjectLinkInput {
   title?: string | undefined;
   url?: string | undefined;
-  icon?: string | null | undefined;
 }
 
 export interface CreateKanbanInput {

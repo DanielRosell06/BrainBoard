@@ -221,8 +221,8 @@ export async function handleNewEntitiesTools(name: string, args: any) {
   }
 
   if (name === 'create_bookmark') {
-    const { projectId, title, url, description, group, icon } = args;
-    const bookmark = await bookmarkService.createBookmark(projectId, { title, url, description, group, icon });
+    const { projectId, title, url, description, group } = args;
+    const bookmark = await bookmarkService.createBookmark(projectId, { title, url, description, group });
     return {
       content: [{ type: 'text' as const, text: JSON.stringify({ success: true, message: 'Bookmark criado', bookmark }, null, 2) }],
     };
@@ -237,8 +237,8 @@ export async function handleNewEntitiesTools(name: string, args: any) {
   }
 
   if (name === 'update_bookmark') {
-    const { id, title, url, description, group, icon } = args;
-    const bookmark = await bookmarkService.updateBookmark(id, { title, url, description, group, icon });
+    const { id, title, url, description, group } = args;
+    const bookmark = await bookmarkService.updateBookmark(id, { title, url, description, group });
     return {
       content: [{ type: 'text' as const, text: JSON.stringify({ success: true, message: 'Bookmark atualizado', bookmark }, null, 2) }],
     };

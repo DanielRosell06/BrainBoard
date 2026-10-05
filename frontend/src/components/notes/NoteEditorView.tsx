@@ -113,7 +113,7 @@ export const NoteEditorView: React.FC<NoteEditorViewProps> = ({
   // Nota não encontrada
   if (!note) {
     return (
-      <div className="bg-white rounded-2xl shadow-sm border border-neutral-200 p-8 min-h-[600px]">
+      <div className="flex flex-col flex-1 p-8">
         <div className="text-center py-20 px-4">
           <FileText className="w-12 h-12 text-neutral-300 mx-auto mb-4" />
           <h3 className="text-sm font-semibold text-neutral-900">Nota não encontrada</h3>
@@ -126,9 +126,9 @@ export const NoteEditorView: React.FC<NoteEditorViewProps> = ({
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-neutral-200 flex flex-col min-h-[600px] max-h-[calc(100vh-12rem)]">
+    <div className="flex flex-col flex-1">
       {/* Header: título + status de salvamento */}
-      <div className="flex items-center gap-4 px-6 py-4 border-b border-neutral-200">
+      <div className="flex items-center gap-4 px-8 pt-8 pb-4">
         {/* Título */}
         <div className="flex-1 flex items-center">
           {isEditingTitle ? (
@@ -137,7 +137,7 @@ export const NoteEditorView: React.FC<NoteEditorViewProps> = ({
                 type="text"
                 value={editTitle}
                 onChange={(e) => setEditTitle(e.target.value)}
-                className="flex-1 text-xl font-bold bg-neutral-50 border border-neutral-300 rounded-lg px-3 py-1 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                className="flex-1 text-3xl font-bold bg-transparent border border-transparent rounded-lg px-3 py-1 outline-none focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                 autoFocus
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') handleUpdateTitle();
@@ -161,8 +161,8 @@ export const NoteEditorView: React.FC<NoteEditorViewProps> = ({
               </button>
             </div>
           ) : (
-            <div className="flex items-center gap-2 group flex-1">
-              <h1 className="text-xl font-bold text-neutral-900 truncate">{title}</h1>
+             <div className="flex items-center gap-2 group flex-1">
+              <h1 className="text-3xl font-bold text-neutral-900 truncate">{title}</h1>
               <button
                 onClick={() => setIsEditingTitle(true)}
                 className="opacity-0 group-hover:opacity-100 p-1.5 text-neutral-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all shrink-0"
@@ -215,7 +215,7 @@ export const NoteEditorView: React.FC<NoteEditorViewProps> = ({
       </div>
 
       {/* Editor Rich Text */}
-      <div className="flex-1 min-h-0 flex flex-col">
+      <div className="flex-1 flex flex-col">
         <RichTextEditor
           content={content}
           onUpdate={handleContentUpdate}

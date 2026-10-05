@@ -200,8 +200,8 @@ export const deleteProject = async (req: Request, res: Response) => {
 export const createProjectLink = async (req: Request, res: Response) => {
   try {
     const projectId = String(req.params.projectId);
-    const { title, url, icon } = req.body;
-    const link = await projectService.createLink(projectId, { title, url, icon });
+    const { title, url } = req.body;
+    const link = await projectService.createLink(projectId, { title, url });
     res.status(201).json(link);
   } catch (error: any) {
     if (error instanceof ValidationError) return res.status(400).json({ error: error.message });
@@ -213,8 +213,8 @@ export const createProjectLink = async (req: Request, res: Response) => {
 export const updateProjectLink = async (req: Request, res: Response) => {
   try {
     const id = String(req.params.id);
-    const { title, url, icon } = req.body;
-    const link = await projectService.updateLink(id, { title, url, icon });
+    const { title, url } = req.body;
+    const link = await projectService.updateLink(id, { title, url });
     res.json(link);
   } catch (error: any) {
     if (error instanceof ValidationError) return res.status(400).json({ error: error.message });

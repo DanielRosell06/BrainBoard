@@ -8,6 +8,7 @@ import React, {
 } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { projectsApi, kanbansApi, notesApi, tasksApi, calendarApi } from '../services/api';
+import { useToast } from './ToastContext';
 import type {
   Project,
   ProjectSummary,
@@ -106,6 +107,7 @@ export const useAppContext = (): AppContextValue => {
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { toast } = useToast();
 
   const [projects, setProjects] = useState<ProjectSummary[]>([]);
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
@@ -423,7 +425,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     } catch (err) {
       console.error('Failed to update task status:', err);
       setActiveProject(prevProject);
-      alert('Erro ao atualizar status da tarefa.');
+      toast('Erro ao atualizar status da tarefa.', 'error');
     }
   };
 
@@ -444,7 +446,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     } catch (err) {
       console.error('Failed to delete task:', err);
       setActiveProject(prevProject);
-      alert('Erro ao excluir tarefa.');
+      toast('Erro ao excluir tarefa.', 'error');
     }
   };
 
@@ -525,7 +527,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         await loadProjects();
       } catch (err) {
         console.error('Failed to delete project:', err);
-        alert('Erro ao excluir projeto.');
+        toast('Erro ao excluir projeto.', 'error');
       }
     }
   };

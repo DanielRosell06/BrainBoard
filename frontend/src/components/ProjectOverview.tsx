@@ -4,6 +4,7 @@ import type { Project } from '../types';
 import { FolderKanban, FileText, ArrowRight, Edit2, Check, X, Loader2, Github, Activity, CheckSquare, Link as LinkIcon, PenTool, Copy } from 'lucide-react';
 import { RichTextEditor } from './notes/RichTextEditor';
 import { projectsApi } from '../services/api';
+import { useToast } from '../context/ToastContext';
 
 interface ProjectOverviewProps {
   project: Project;
@@ -22,6 +23,7 @@ export const ProjectOverview: React.FC<ProjectOverviewProps> = ({
   onOpenCreateNote,
   onProjectUpdated
 }) => {
+  const { toast } = useToast();
   const navigate = useNavigate();
   const [description, setDescription] = useState(project.description ?? '');
   const [isEditing, setIsEditing] = useState(false);
@@ -41,9 +43,10 @@ export const ProjectOverview: React.FC<ProjectOverviewProps> = ({
       });
       setIsEditing(false);
       onProjectUpdated?.(updated);
+      toast('Descrição salva.', 'success');
     } catch (err) {
       console.error('Erro ao salvar descrição do projeto:', err);
-      alert('Erro ao salvar a descrição do projeto.');
+      toast('Erro ao salvar a descrição do projeto.', 'error');
     } finally {
       setIsSaving(false);
     }
@@ -57,7 +60,7 @@ export const ProjectOverview: React.FC<ProjectOverviewProps> = ({
   return (
     <div className="space-y-8 animate-in fade-in duration-300 flex flex-col h-full min-w-0 w-full">
       {/* Header Info with Description */}
-      <div className="bg-white p-6 rounded-2xl border border-neutral-200 shadow-sm flex flex-col min-w-0 w-full">
+      <div className="flex flex-col min-w-0 w-full">
         <div className="flex items-center justify-between mb-4 gap-4">
           <input
             key={project.id}
@@ -81,7 +84,7 @@ export const ProjectOverview: React.FC<ProjectOverviewProps> = ({
                 e.currentTarget.blur();
               }
             }}
-            className="text-2xl font-bold text-neutral-900 bg-transparent border-none outline-none focus:ring-0 w-full hover:bg-neutral-50 focus:bg-neutral-50 px-2 py-1 rounded transition-colors -ml-2"
+            className="text-4xl font-bold text-neutral-900 bg-transparent border-none outline-none focus:ring-0 w-full hover:bg-neutral-100 focus:bg-white px-3 py-1.5 rounded-lg transition-colors -ml-3"
           />
           
           {/* Action Buttons */}
@@ -118,7 +121,7 @@ export const ProjectOverview: React.FC<ProjectOverviewProps> = ({
         </div>
         
         {isEditing ? (
-          <div className="border border-neutral-200 rounded-xl bg-neutral-50 min-h-[300px] flex flex-col max-h-[500px]">
+          <div className="border border-neutral-200 rounded-xl bg-white min-h-[300px] flex flex-col max-h-[500px] shadow-sm">
             <RichTextEditor
               content={description}
               onUpdate={(html) => setDescription(html)}
@@ -352,7 +355,7 @@ export const ProjectOverview: React.FC<ProjectOverviewProps> = ({
                         className={`flex items-center gap-3 p-4 hover:bg-neutral-50 transition-colors group ${idx !== bmarks.length - 1 ? 'border-b border-neutral-100' : ''}`}
                       >
                         <div className="w-8 h-8 rounded-lg bg-neutral-100 flex items-center justify-center text-lg shrink-0 group-hover:scale-110 transition-transform">
-                          {bookmark.icon || '🔗'}
+                          🔗
                         </div>
                         <div className="min-w-0 flex-1">
                           <p className="text-sm font-medium text-neutral-900 truncate group-hover:text-blue-600 transition-colors">
@@ -470,7 +473,7 @@ export const ProjectOverview: React.FC<ProjectOverviewProps> = ({
                                 notes: [...(project.notes || []), { ...note, id: Math.random().toString(), title: `${note.title} (Cópia)` }]
                               });
                             } else {
-                              alert('Nota duplicada! Atualize a página.');
+                              toast('Nota duplicada! Atualize a página.', 'info');
                             }
                           });
                         });
@@ -515,7 +518,7 @@ export const ProjectOverview: React.FC<ProjectOverviewProps> = ({
               // Wait, I should add a prop or use api directly. Let's use api directly.
               import('../services/api').then(({ updateLogsApi }) => {
                  updateLogsApi.create(project.id, { title, content: content || ' ' }).then(() => {
-                    alert('Log adicionado! Atualize a página ou sincronize.');
+                    toast('Log adicionado! Atualize a página ou sincronize.', 'success');
                  });
               });
             }}

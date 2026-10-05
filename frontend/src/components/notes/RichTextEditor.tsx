@@ -85,12 +85,12 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({
   }, [editable, editor]);
 
   return (
-    <div className="tiptap-editor flex flex-col flex-1 min-h-0">
+    <div className="tiptap-editor flex flex-col flex-1">
       {/* Toolbar */}
       <EditorToolbar editor={editor} />
 
       {/* Editor Content */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1">
         <EditorContent editor={editor} />
       </div>
     </div>

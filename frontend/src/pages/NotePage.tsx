@@ -45,7 +45,7 @@ export const NotePage: React.FC = () => {
 
   if (!noteId) {
     return (
-      <div className="bg-white rounded-2xl shadow-sm border border-neutral-200 p-8 min-h-[600px]">
+      <div className="flex flex-col flex-1 p-8">
         <div className="text-center py-20 px-4">
           <h3 className="text-sm font-semibold text-neutral-900">Selecione uma nota</h3>
           <p className="text-xs text-neutral-500 mt-1">

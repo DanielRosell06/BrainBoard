@@ -35,8 +35,6 @@ model Project {
   settings      Json?
   order         Int           @default(0)
   isFavorite    Boolean       @default(false)
-  color         String?
-  icon          String?
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 
@@ -77,7 +75,6 @@ model KanbanColumn {
 model KanbanTag {
   id        String   @id @default(uuid())
   name      String
-  color     String   @default("#3b82f6")
   kanbanId  String
   kanban    Kanban   @relation(fields: [kanbanId], references: [id], onDelete: Cascade)
   tasks     Task[]
@@ -177,7 +174,6 @@ model ProjectLink {
   id        String   @id @default(uuid())
   title     String
   url       String
-  icon      String?
   projectId String
   project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
@@ -232,7 +228,6 @@ model Bookmark {
   url         String
   description String?
   group       String?
-  icon        String?
   projectId   String
   project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
   order       Int      @default(0)

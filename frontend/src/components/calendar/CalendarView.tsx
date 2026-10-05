@@ -19,12 +19,14 @@ import {
 import { calendarApi, appointmentsApi } from '../../services/api';
 import type { CalendarEventProjection } from '../../types';
 import { CreateAppointmentModal } from './CreateAppointmentModal';
+import { useToast } from '../../context/ToastContext';
 
 export interface CalendarViewProps {
   onSelectProject?: (projectId: string) => void;
 }
 
 export const CalendarView: React.FC<CalendarViewProps> = ({ onSelectProject }) => {
+  const { toast } = useToast();
   const [currentDate, setCurrentDate] = useState<Date>(() => new Date());
   const [selectedDate, setSelectedDate] = useState<Date>(() => new Date());
   const [events, setEvents] = useState<CalendarEventProjection[]>([]);
@@ -98,7 +100,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ onSelectProject }) =
     } catch (err) {
       console.error('Failed to toggle appointment:', err);
       setEvents(prevEvents);
-      alert('Erro ao atualizar status do compromisso.');
+      toast('Erro ao atualizar status do compromisso.', 'error');
     } finally {
       setTogglingEventId(null);
     }
@@ -122,7 +124,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ onSelectProject }) =
     } catch (err) {
       console.error('Failed to delete appointment:', err);
       setEvents(prevEvents);
-      alert('Erro ao excluir compromisso.');
+      toast('Erro ao excluir compromisso.', 'error');
     } finally {
       setDeletingEventId(null);
     }

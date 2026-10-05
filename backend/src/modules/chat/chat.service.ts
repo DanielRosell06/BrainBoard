@@ -670,11 +670,11 @@ const toolImplementations: Record<string, (args: any) => Promise<any>> = {
   // ─── TAGS DO KANBAN ────────────────────────────────────────────────────────
   add_kanban_tag: async (args) => {
     logInfo('TOOL', 'Executing add_kanban_tag', args);
-    return kanbanCustomizationService.addTag(args.kanbanId, args.name, args.color);
+    return kanbanCustomizationService.addTag(args.kanbanId, args.name);
   },
   update_kanban_tag: async (args) => {
     logInfo('TOOL', 'Executing update_kanban_tag', args);
-    return kanbanCustomizationService.updateTag(args.tagId, args.name, args.color);
+    return kanbanCustomizationService.updateTag(args.tagId, args.name);
   },
   remove_kanban_tag: async (args) => {
     logInfo('TOOL', 'Executing remove_kanban_tag', { tagId: args.tagId });
@@ -1041,52 +1041,68 @@ export const chatService = {
     };
 
     try {
-       let stream = await runStream(contents);
-       let fullText = '';
-       let functionCallObj: any = null;
+       let currentContents = [...contents];
+       let finalResponseText = '';
+       let done = false;
 
-       for await (const chunk of stream) {
-          if (chunk.functionCalls && chunk.functionCalls.length > 0) {
-             functionCallObj = chunk.functionCalls[0];
-          }
-          if (chunk.text) {
-             fullText += chunk.text;
-             sendEvent('chunk', chunk.text);
-          }
-       }
+       while (!done) {
+          let stream = await runStream(currentContents);
+          let functionCallObj: any = null;
+          let thoughtSignature: string | undefined;
+          let turnText = '';
 
-       if (functionCallObj) {
-          logInfo('FUNC_CALL', `Function called: ${functionCallObj.name}`);
-          
-          const fn = toolImplementations[functionCallObj.name];
-          let functionResult: any;
-          if (fn) {
-             try {
-                functionResult = await fn(functionCallObj.args);
-             } catch (e: any) {
-                functionResult = { error: e.message };
-             }
-          } else {
-             functionResult = { error: `Função desconhecida: ${functionCallObj.name}` };
-          }
-
-          const followUpContents = [
-             ...contents,
-             { role: 'model', parts: [{ functionCall: { name: functionCallObj.name, args: functionCallObj.args } }] },
-             { role: 'user', parts: [{ functionResponse: { name: functionCallObj.name, response: { result: functionResult } } }] },
-          ];
-
-          stream = await runStream(followUpContents);
-                    
           for await (const chunk of stream) {
+             if (chunk.candidates?.[0]?.content?.parts) {
+                for (const p of chunk.candidates[0].content.parts) {
+                   if (p.thoughtSignature) {
+                      thoughtSignature = p.thoughtSignature;
+                   }
+                }
+             }
+             if (chunk.functionCalls && chunk.functionCalls.length > 0) {
+                functionCallObj = chunk.functionCalls[0];
+             }
              if (chunk.text) {
-                fullText += chunk.text;
+                turnText += chunk.text;
+                finalResponseText += chunk.text;
                 sendEvent('chunk', chunk.text);
              }
           }
+
+          if (functionCallObj) {
+             logInfo('FUNC_CALL', `Function called: ${functionCallObj.name}`);
+             
+             const fn = toolImplementations[functionCallObj.name];
+             let functionResult: any;
+             if (fn) {
+                try {
+                   functionResult = await fn(functionCallObj.args);
+                } catch (e: any) {
+                   functionResult = { error: e.message };
+                }
+             } else {
+                functionResult = { error: `Função desconhecida: ${functionCallObj.name}` };
+             }
+
+             const assembledParts: any[] = [];
+             if (turnText) assembledParts.push({ text: turnText });
+             
+             const fCallPart: any = { functionCall: functionCallObj };
+             if (thoughtSignature) fCallPart.thoughtSignature = thoughtSignature;
+             assembledParts.push(fCallPart);
+
+             currentContents = [
+                ...currentContents,
+                { role: 'model', parts: assembledParts },
+                { role: 'user', parts: [{ functionResponse: { name: functionCallObj.name, response: { result: functionResult }, id: functionCallObj.id } }] },
+             ];
+             // The loop will continue to process the next step
+          } else {
+             done = true;
+          }
        }
 
-       const responseText = fullText || 'Operação concluída.';
+       const responseText = finalResponseText || 'Operação concluída.';
        const savedMessage = await prisma.chatMessage.create({
           data: { role: 'assistant', content: responseText, conversationId }
        });

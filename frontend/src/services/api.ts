@@ -127,11 +127,11 @@ export const kanbansApi = {
   },
 
   update(
-    projectId: string,
+    _projectId: string,
     kanbanId: string,
     input: Partial<import('../types').CreateKanbanInput> & { order?: number }
   ): Promise<import('../types').Kanban> {
-    return request(`/api/projects/${projectId}/kanbans/${kanbanId}`, {
+    return request(`/api/kanbans/${kanbanId}`, {
       method: 'PATCH',
       body: JSON.stringify(input),
     });

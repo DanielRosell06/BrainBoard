@@ -315,15 +315,9 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
                             ? 'shadow-xs border-transparent text-white'
                             : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
                         }`}
-                        style={
-                          isSelected
-                            ? { backgroundColor: tag.color, borderColor: tag.color }
-                            : {}
-                        }
                       >
                         <span
-                          className="w-2 h-2 rounded-full"
-                          style={{ backgroundColor: isSelected ? '#ffffff' : tag.color }}
+                          className={`w-2 h-2 rounded-full ${isSelected ? 'bg-white' : 'bg-slate-400'}`}
                         />
                         {tag.name}
                       </button>

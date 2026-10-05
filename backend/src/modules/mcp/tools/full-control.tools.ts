@@ -369,7 +369,7 @@ export async function handleFullControlTools(name: string, args: any) {
     const kanbanId = String(args?.kanbanId ?? '').trim();
     const tagName = String(args?.name ?? '').trim();
     if (!kanbanId || !tagName) throw new Error('kanbanId e name são obrigatórios');
-    const tag = await kanbanCustomizationService.addTag(kanbanId, tagName, args?.color);
+    const tag = await kanbanCustomizationService.addTag(kanbanId, tagName);
     return {
       content: [{ type: 'text' as const, text: JSON.stringify({ success: true, message: `Tag '${tagName}' adicionada.`, id: tag.id, tag }, null, 2) }],
     };
@@ -378,7 +378,7 @@ export async function handleFullControlTools(name: string, args: any) {
   if (name === 'update_kanban_tag') {
     const tagId = String(args?.tagId ?? '').trim();
     if (!tagId) throw new Error('tagId é obrigatório');
-    const tag = await kanbanCustomizationService.updateTag(tagId, args?.name, args?.color);
+    const tag = await kanbanCustomizationService.updateTag(tagId, args?.name);
     return {
       content: [{ type: 'text' as const, text: JSON.stringify({ success: true, message: `Tag ${tagId} atualizada.`, id: tag.id, tag }, null, 2) }],
     };

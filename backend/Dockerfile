@@ -21,7 +21,7 @@ COPY MCP_DOCUMENTATION.md* ./
 
 # Copy entrypoint script
 COPY entrypoint.sh ./
-RUN chmod +x entrypoint.sh
+RUN sed -i 's/\r$//' entrypoint.sh && chmod +x entrypoint.sh
 
 # Expose backend port
 EXPOSE 3000

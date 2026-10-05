@@ -156,12 +156,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
                 task.tags.map((tag) => (
                   <span
                     key={tag.id}
-                    className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider"
-                    style={{
-                      backgroundColor: `${tag.color}15`,
-                      color: tag.color,
-                      border: `1px solid ${tag.color}35`,
-                    }}
+                    className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-700 border border-slate-200"
                   >
                     {tag.name}
                   </span>
@@ -207,8 +202,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
                           >
                             <div className="flex items-center gap-2">
                               <span
-                                className="w-2.5 h-2.5 rounded-full"
-                                style={{ backgroundColor: tag.color }}
+                                className="w-2.5 h-2.5 rounded-full bg-slate-400"
                               />
                               <span>{tag.name}</span>
                             </div>

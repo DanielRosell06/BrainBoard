@@ -157,8 +157,6 @@ export class ProjectService {
         type,
         githubRepo,
         isFavorite: data.isFavorite ?? false,
-        color: data.color ?? null,
-        icon: data.icon ?? null,
         ...(settings !== undefined ? { settings } : {}),
       },
       include: {
@@ -201,8 +199,6 @@ export class ProjectService {
       settings?: Prisma.InputJsonValue;
       order?: number;
       isFavorite?: boolean;
-      color?: string | null;
-      icon?: string | null;
     } = {};
 
     if (data.title !== undefined) {
@@ -255,14 +251,6 @@ export class ProjectService {
 
     if (data.isFavorite !== undefined) {
       updateData.isFavorite = data.isFavorite;
-    }
-
-    if (data.color !== undefined) {
-      updateData.color = data.color === null ? null : String(data.color).trim();
-    }
-
-    if (data.icon !== undefined) {
-      updateData.icon = data.icon === null ? null : String(data.icon).trim();
     }
 
     try {
@@ -373,14 +361,14 @@ export class ProjectService {
       throw error;
     }
   }
-  async createLink(projectId: string, data: { title: string, url: string, icon?: string | null }) {
+  async createLink(projectId: string, data: { title: string, url: string }) {
     if (!projectId) throw new ValidationError('Project ID is required');
     if (!data.title) throw new ValidationError('Title is required');
     if (!data.url) throw new ValidationError('URL is required');
     return await prisma.projectLink.create({ data: { ...data, projectId } });
   }
 
-  async updateLink(id: string, data: { title?: string, url?: string, icon?: string | null }) {
+  async updateLink(id: string, data: { title?: string, url?: string }) {
     if (!id) throw new ValidationError('Link ID is required');
     return await prisma.projectLink.update({ where: { id }, data });
   }

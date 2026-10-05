@@ -5,6 +5,7 @@ import { EditTaskModal } from './EditTaskModal';
 import { Plus, X, Tag, LayoutGrid, Edit2, Check } from 'lucide-react';
 import { kanbanColumnsApi, kanbanTagsApi } from '../services/api';
 import { DragDropContext, DropResult } from '@hello-pangea/dnd';
+import { useToast } from '../context/ToastContext';
 
 export interface KanbanBoardProps {
   project?: Project | null;
@@ -36,11 +37,11 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   onOpenCreateModal,
   onRefreshKanban,
 }) => {
+  const { toast } = useToast();
   const [isAddingColumn, setIsAddingColumn] = useState(false);
   const [newColumnTitle, setNewColumnTitle] = useState('');
   const [isTagsModalOpen, setIsTagsModalOpen] = useState(false);
   const [newTagName, setNewTagName] = useState('');
-  const [newTagColor, setNewTagColor] = useState('#3b82f6');
   const [isCreatingDefaultCols, setIsCreatingDefaultCols] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
 
@@ -113,7 +114,6 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
     try {
       await kanbanTagsApi.create(kanban.id, {
         name: newTagName.trim(),
-        color: newTagColor,
       });
       setNewTagName('');
       onRefreshKanban();
@@ -173,9 +173,10 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
         tagIds: task.tags?.map(t => t.id),
       });
       onRefreshKanban();
+      toast('Tarefa duplicada com sucesso.', 'success');
     } catch (e) {
       console.error('Failed to duplicate task:', e);
-      alert('Erro ao duplicar tarefa.');
+      toast('Erro ao duplicar tarefa.', 'error');
     }
   };
 
@@ -386,8 +387,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
                 >
                   <div className="flex items-center gap-2.5">
                     <span
-                      className="w-3.5 h-3.5 rounded-full border border-black/10"
-                      style={{ backgroundColor: tag.color }}
+                      className="w-3.5 h-3.5 rounded-full border border-black/10 bg-slate-400"
                     />
                     <span className="font-semibold text-slate-800 text-xs">{tag.name}</span>
                   </div>
@@ -407,13 +407,7 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
             </div>
 
             <div className="pt-4 border-t border-slate-100 flex items-center gap-2">
-              <input
-                type="color"
-                value={newTagColor}
-                onChange={(e) => setNewTagColor(e.target.value)}
-                className="w-9 h-9 rounded-xl cursor-pointer border border-slate-300 p-0.5 bg-white shrink-0"
-                title="Escolher cor da tag"
-              />
+
               <input
                 type="text"
                 placeholder="Nome da tag (ex: Urgente)..."

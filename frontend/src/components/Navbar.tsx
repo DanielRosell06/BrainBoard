@@ -11,15 +11,18 @@ import {
   ChevronDown,
   FileText,
   KanbanSquare,
-  GripVertical
+  GripVertical,
+  CheckSquare,
+  PenTool,
+  Link as LinkIcon
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { DragDropContext, Droppable, Draggable, DropResult, DragStart } from '@hello-pangea/dnd';
 import { chatApi, projectsApi, kanbansApi, notesApi, whiteboardsApi, checklistsApi } from '../services/api';
 import type { ProjectSummary, ActiveView, ChatConversation } from '../types';
 
 export interface NavbarProps {
   currentView?: ActiveView;
-  onSelectView?: (view: ActiveView) => void;
   projects?: ProjectSummary[];
   activeProjectId?: string | null;
   onSelectProject?: (id: string | null) => void;
@@ -32,7 +35,6 @@ export interface NavbarProps {
   onSelectCategory?: (category: string) => void;
   calendarCount?: number;
   activeChatId?: string | null;
-  onSelectChat?: (id: string) => void;
   categoryCounts?: {
     ALL?: number;
     PROJECT?: number;
@@ -44,10 +46,6 @@ export interface NavbarProps {
   activeNoteId?: string | null;
   activeWhiteboardId?: string | null;
   activeChecklistId?: string | null;
-  onSelectKanban?: (id: string | null) => void;
-  onSelectNote?: (id: string | null) => void;
-  onSelectWhiteboard?: (id: string | null) => void;
-  onSelectChecklist?: (id: string | null) => void;
   loadProjects?: (silent?: boolean) => Promise<any>;
 }
 
@@ -71,7 +69,6 @@ const getProjectFiles = (p: ProjectSummary): ProjectFile[] => {
 
 export const Navbar: React.FC<NavbarProps> = ({
   currentView = 'BOARD',
-  onSelectView,
   projects = [],
   activeProjectId = null,
   onSelectProject,
@@ -82,18 +79,18 @@ export const Navbar: React.FC<NavbarProps> = ({
   isConnected = true,
   calendarCount = 0,
   activeChatId = null,
-  onSelectChat,
   activeKanbanId,
   activeNoteId,
-  onSelectKanban,
-  onSelectNote,
   loadProjects
 }) => {
+  const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [conversations, setConversations] = useState<ChatConversation[]>([]);
   const [expandedProjects, setExpandedProjects] = useState<Record<string, boolean>>({});
   const [localProjects, setLocalProjects] = useState<ProjectSummary[]>([]);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+
+  const isProjectContext = !!(activeProjectId && currentView && !['PROJECTS', 'CALENDAR', 'CHAT'].includes(currentView));
 
   useEffect(() => {
     setLocalProjects(projects);
@@ -125,7 +122,7 @@ export const Navbar: React.FC<NavbarProps> = ({
     try {
       const newChat = await chatApi.createConversation();
       setConversations(prev => [newChat, ...prev]);
-      if (onSelectChat) onSelectChat(newChat.id);
+      navigate(`/chat/${newChat.id}`);
       setIsMobileMenuOpen(false);
     } catch (e) {
       console.error(e);
@@ -133,8 +130,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   };
 
   const handleProjectClick = (pId: string) => {
-    if (onSelectProject) onSelectProject(pId);
-    if (onSelectView) onSelectView('PROJECT_OVERVIEW');
+    navigate(`/projects/${pId}`);
     setExpandedProjects((prev) => ({ ...prev, [pId]: true }));
     setIsMobileMenuOpen(false);
   };
@@ -152,29 +148,43 @@ export const Navbar: React.FC<NavbarProps> = ({
     if (source.droppableId === destination.droppableId && source.index === destination.index) return;
 
     if (type === 'PROJECT') {
-      const newProjects = Array.from(localProjects);
+      const newProjects = localProjects.map(p => ({ ...p }));
       const [removed] = newProjects.splice(source.index, 1);
       newProjects.splice(destination.index, 0, removed);
       
+      const updates = newProjects
+        .map((p, idx) => ({ id: p.id, order: idx, oldOrder: p.order }))
+        .filter(u => u.order !== u.oldOrder)
+        .map(u => ({ id: u.id, order: u.order }));
+
       newProjects.forEach((p, idx) => { p.order = idx; });
       setLocalProjects(newProjects);
 
       try {
-        await Promise.all(newProjects.map((p, idx) => projectsApi.update(p.id, { order: idx })));
-        if (loadProjects) loadProjects(true);
+        if (updates.length > 0) {
+          await Promise.all(updates.map(u => projectsApi.update(u.id, { order: u.order })));
+          if (loadProjects) loadProjects(true);
+        }
       } catch (e) {
         console.error(e);
         setLocalProjects(projects);
       }
     } else if (type === 'FILE') {
+      if (source.droppableId !== destination.droppableId) return;
+
       const projectId = source.droppableId.replace('FILES-', '');
       const projectIndex = localProjects.findIndex(p => p.id === projectId);
       if (projectIndex === -1) return;
       
-      const project = localProjects[projectIndex];
-      const files = getProjectFiles(project);
+      const project = { ...localProjects[projectIndex] };
+      const files = getProjectFiles(project).map(f => ({ ...f }));
       const [removed] = files.splice(source.index, 1);
       files.splice(destination.index, 0, removed);
+
+      const updates = files
+        .map((f, idx) => ({ f, order: idx, oldOrder: f.order }))
+        .filter(u => u.order !== u.oldOrder)
+        .map(u => ({ f: u.f, order: u.order }));
 
       const newProject: ProjectSummary = { ...project, kanbans: [], notes: [], whiteboards: [], checklists: [] };
       files.forEach((f, idx) => {
@@ -191,15 +201,17 @@ export const Navbar: React.FC<NavbarProps> = ({
       setLocalProjects(newProjects);
 
       try {
-        await Promise.all(
-          files.map((f, idx) => {
-            if (f._type === 'KANBAN') return kanbansApi.update(projectId, f.id, { order: idx });
-            if (f._type === 'NOTE') return notesApi.update(projectId, f.id, { order: idx });
-            if (f._type === 'WHITEBOARD') return whiteboardsApi.update(projectId, f.id, { order: idx });
-            if (f._type === 'CHECKLIST') return checklistsApi.update(f.id, { order: idx });
-          })
-        );
-        if (loadProjects) loadProjects(true);
+        if (updates.length > 0) {
+          await Promise.all(
+            updates.map(({ f, order }) => {
+              if (f._type === 'KANBAN') return kanbansApi.update(projectId, f.id, { order });
+              if (f._type === 'NOTE') return notesApi.update(projectId, f.id, { order });
+              if (f._type === 'WHITEBOARD') return whiteboardsApi.update(projectId, f.id, { order });
+              if (f._type === 'CHECKLIST') return checklistsApi.update(f.id, { order });
+            })
+          );
+          if (loadProjects) loadProjects(true);
+        }
       } catch (e) {
         console.error(e);
         setLocalProjects(projects);
@@ -211,8 +223,14 @@ export const Navbar: React.FC<NavbarProps> = ({
     <div className="flex flex-col h-full justify-between p-6 space-y-8 bg-neutral-50 border-r-0">
       <div>
         <div className="flex items-center gap-3 px-1 py-1 mb-8">
-          <div className="flex items-center justify-center w-10 h-10 rounded-2xl bg-neutral-900 text-white shadow-none">
+          <div className="relative flex items-center justify-center w-10 h-10 rounded-2xl bg-neutral-900 text-white shadow-none">
             <Brain className="w-5 h-5" />
+            <span
+              className={`absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-neutral-50 ${
+                isConnected ? 'bg-green-500' : 'bg-red-500'
+              }`}
+              title={isConnected ? 'Conectado' : 'Desconectado'}
+            />
           </div>
           <div>
             <div className="flex items-center gap-1.5">
@@ -226,8 +244,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         <div className="space-y-1">
           <button
             onClick={() => {
-              if (onSelectView) onSelectView('PROJECTS');
-              if (onSelectProject) onSelectProject(null);
+              navigate('/projects');
               setIsMobileMenuOpen(false);
             }}
             className={`w-full flex items-center justify-between px-4 py-2.5 rounded-xl text-sm transition-colors ${
@@ -247,7 +264,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           <button
             onClick={() => {
-              if (onSelectView) onSelectView('CALENDAR');
+              navigate('/calendar');
               setIsMobileMenuOpen(false);
             }}
             className={`w-full flex items-center justify-between px-4 py-2.5 rounded-xl text-sm transition-colors ${
@@ -268,22 +285,22 @@ export const Navbar: React.FC<NavbarProps> = ({
           </button>
         </div>
 
-        {localProjects.length > 0 && (
-          <div className="mt-8 space-y-1">
-            <div className="flex items-center justify-between px-4 mb-3">
-              <p className="text-xs font-medium text-neutral-500">Projetos</p>
-              {onOpenCreateProjectModal && (
-                <button
-                  type="button"
-                  onClick={onOpenCreateProjectModal}
-                  aria-label="Criar novo projeto"
-                  className="text-neutral-400 hover:text-neutral-900 p-0.5 rounded transition-colors"
-                >
-                  <Plus className="w-4 h-4" />
-                </button>
-              )}
-            </div>
+        <div className="mt-8 space-y-1">
+          <div className="flex items-center justify-between px-4 mb-3">
+            <p className="text-xs font-medium text-neutral-500">Projetos</p>
+            {onOpenCreateProjectModal && (
+              <button
+                type="button"
+                onClick={onOpenCreateProjectModal}
+                aria-label="Criar novo projeto"
+                className="text-neutral-400 hover:text-neutral-900 p-0.5 rounded transition-colors"
+              >
+                <Plus className="w-4 h-4" />
+              </button>
+            )}
+          </div>
 
+          {localProjects.length > 0 ? (
             <DragDropContext onDragStart={onDragStart} onDragEnd={onDragEnd}>
               <Droppable droppableId="PROJECTS" type="PROJECT">
                 {(provided) => (
@@ -334,7 +351,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                                     <Plus className="w-3.5 h-3.5" />
                                   </button>
                                   {openDropdown === p.id && (
-                                    <div className="absolute right-0 top-full mt-1 w-36 bg-white rounded-lg shadow-lg border border-neutral-200 py-1 z-50">
+                                    <div className="absolute right-0 top-full mt-1 w-44 bg-white rounded-lg shadow-lg border border-neutral-200 py-1 z-50">
                                       <button
                                         onClick={(e) => {
                                           e.stopPropagation();
@@ -357,6 +374,54 @@ export const Navbar: React.FC<NavbarProps> = ({
                                       >
                                         <FileText className="w-3.5 h-3.5" /> Nota
                                       </button>
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          const title = prompt('Nome do Checklist:');
+                                          if (title) {
+                                            checklistsApi.create(p.id, { title }).then(() => {
+                                              if (loadProjects) loadProjects(true);
+                                            });
+                                          }
+                                          setOpenDropdown(null);
+                                        }}
+                                        className="w-full text-left px-3 py-2 text-xs hover:bg-neutral-50 text-neutral-700 flex items-center gap-2"
+                                      >
+                                        <CheckSquare className="w-3.5 h-3.5" /> Checklist
+                                      </button>
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          const title = prompt('Nome do Whiteboard:');
+                                          if (title) {
+                                            whiteboardsApi.create(p.id, { title }).then(() => {
+                                              if (loadProjects) loadProjects(true);
+                                            });
+                                          }
+                                          setOpenDropdown(null);
+                                        }}
+                                        className="w-full text-left px-3 py-2 text-xs hover:bg-neutral-50 text-neutral-700 flex items-center gap-2"
+                                      >
+                                        <PenTool className="w-3.5 h-3.5" /> Whiteboard
+                                      </button>
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          const url = prompt('URL do Bookmark:');
+                                          if (url) {
+                                            const title = prompt('Título (opcional):') || url;
+                                            import('../services/api').then(({ bookmarksApi }) => {
+                                              bookmarksApi.create(p.id, { title, url }).then(() => {
+                                                if (loadProjects) loadProjects(true);
+                                              });
+                                            });
+                                          }
+                                          setOpenDropdown(null);
+                                        }}
+                                        className="w-full text-left px-3 py-2 text-xs hover:bg-neutral-50 text-neutral-700 flex items-center gap-2"
+                                      >
+                                        <LinkIcon className="w-3.5 h-3.5" /> Bookmark
+                                      </button>
                                     </div>
                                   )}
                                 </div>
@@ -365,20 +430,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                               {isExpanded && (
                                 <Droppable droppableId={`FILES-${p.id}`} type="FILE">
                                   {(provided) => (
-                                    <div ref={provided.innerRef} {...provided.droppableProps} className="pl-9 pr-2 space-y-1 pb-2">
-                                      <button
-                                        onClick={() => {
-                                          if (onSelectProject) onSelectProject(p.id);
-                                          if (onSelectView) onSelectView('PROJECT_OVERVIEW');
-                                          setIsMobileMenuOpen(false);
-                                        }}
-                                        className={`w-full flex items-center gap-2 py-1.5 px-2 rounded-lg text-xs transition-colors text-left truncate ${
-                                          isActive && currentView === 'PROJECT_OVERVIEW' ? 'bg-neutral-200/50 text-neutral-900 font-medium' : 'text-neutral-500 hover:text-neutral-900 hover:bg-neutral-200/30'
-                                        }`}
-                                      >
-                                        <FolderKanban className="w-3.5 h-3.5 shrink-0" />
-                                        <span className="truncate">Visão Geral</span>
-                                      </button>
+                                    <div ref={provided.innerRef} {...provided.droppableProps} className="pl-4 pr-2 space-y-1 pb-2">
+
                                       
                                       {projectFiles.length > 0 ? projectFiles.map((f, fIndex) => {
                                         const isFActive = 
@@ -403,13 +456,14 @@ export const Navbar: React.FC<NavbarProps> = ({
                                                 <div 
                                                   className="flex items-center gap-2 truncate flex-1 cursor-pointer"
                                                   onClick={() => {
-                                                    if (onSelectProject) onSelectProject(p.id);
                                                     if (f._type === 'KANBAN') {
-                                                      if (onSelectKanban) onSelectKanban(f.id);
-                                                      if (onSelectView) onSelectView('BOARD');
+                                                      navigate(`/projects/${p.id}/kanban/${f.id}`);
                                                     } else if (f._type === 'NOTE') {
-                                                      if (onSelectNote) onSelectNote(f.id);
-                                                      if (onSelectView) onSelectView('NOTE');
+                                                      navigate(`/projects/${p.id}/notes/${f.id}`);
+                                                    } else if (f._type === 'WHITEBOARD') {
+                                                      navigate(`/projects/${p.id}/whiteboards/${f.id}`);
+                                                    } else if (f._type === 'CHECKLIST') {
+                                                      navigate(`/projects/${p.id}/checklists/${f.id}`);
                                                     }
                                                     setIsMobileMenuOpen(false);
                                                   }}
@@ -439,22 +493,32 @@ export const Navbar: React.FC<NavbarProps> = ({
                 )}
               </Droppable>
             </DragDropContext>
-          </div>
-        )}
-
-        {conversations.length > 0 && (
-          <div className="mt-8 space-y-1">
-            <div className="flex items-center justify-between px-4 mb-3">
-              <p className="text-xs font-medium text-neutral-500">Conversas</p>
-              <button
-                type="button"
-                onClick={handleCreateChat}
-                aria-label="Nova conversa"
-                className="text-neutral-400 hover:text-neutral-900 p-0.5 rounded transition-colors"
+          ) : (
+            <div className="px-4 py-3 bg-neutral-200/30 mx-2 rounded-xl text-center">
+              <p className="text-[11px] text-neutral-500 mb-1">Nenhum projeto ainda.</p>
+              <button 
+                onClick={onOpenCreateProjectModal}
+                className="text-xs font-semibold text-neutral-700 hover:text-neutral-900 transition-colors"
               >
-                <Plus className="w-4 h-4" />
+                Criar o primeiro
               </button>
             </div>
+          )}
+        </div>
+
+        <div className="mt-8 space-y-1">
+          <div className="flex items-center justify-between px-4 mb-3">
+            <p className="text-xs font-medium text-neutral-500">Conversas</p>
+            <button
+              type="button"
+              onClick={handleCreateChat}
+              aria-label="Nova conversa"
+              className="text-neutral-400 hover:text-neutral-900 p-0.5 rounded transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+            </button>
+          </div>
+          {conversations.length > 0 ? (
             <div className="space-y-1 max-h-40 overflow-y-auto pr-1">
               {conversations.map((chat) => {
                 const isActive = activeChatId === chat.id && currentView === 'CHAT';
@@ -462,8 +526,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   <button
                     key={chat.id}
                     onClick={() => {
-                      if (onSelectChat) onSelectChat(chat.id);
-                      if (onSelectView) onSelectView('CHAT');
+                      navigate(`/chat/${chat.id}`);
                       setIsMobileMenuOpen(false);
                     }}
                     className={`w-full flex items-center justify-between px-4 py-2.5 rounded-xl text-sm transition-all ${
@@ -480,30 +543,157 @@ export const Navbar: React.FC<NavbarProps> = ({
                 );
               })}
             </div>
-          </div>
-        )}
+          ) : (
+            <div className="px-4 py-3 bg-neutral-200/30 mx-2 rounded-xl text-center">
+              <p className="text-[11px] text-neutral-500 mb-1">Nenhuma conversa ainda.</p>
+              <button 
+                onClick={handleCreateChat}
+                className="text-xs font-semibold text-neutral-700 hover:text-neutral-900 transition-colors"
+              >
+                Comece por aqui
+              </button>
+            </div>
+          )}
+        </div>
+
       </div>
 
-      <div className="mt-12 space-y-4">
+      <div className="mt-12 space-y-4 relative">
         <button
-          onClick={() => {
-            onOpenCreateModal();
-            setIsMobileMenuOpen(false);
+          onClick={(e) => {
+            e.stopPropagation();
+            setOpenDropdown(openDropdown === 'GLOBAL_NEW' ? null : 'GLOBAL_NEW');
           }}
           className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-neutral-900 hover:bg-neutral-800 text-white text-sm font-medium rounded-xl transition-all"
         >
           <Plus className="w-4 h-4" />
           <span>Novo</span>
         </button>
+
+        {openDropdown === 'GLOBAL_NEW' && (
+          <div className="absolute bottom-full mb-2 left-0 w-full bg-white rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-neutral-200 py-1.5 z-50 overflow-y-auto max-h-[60vh]">
+            <button
+              onClick={() => {
+                if (onOpenCreateModal) onOpenCreateModal();
+                setOpenDropdown(null);
+                setIsMobileMenuOpen(false);
+              }}
+              className="w-full text-left px-4 py-2.5 text-sm hover:bg-neutral-50 text-neutral-700 flex items-center gap-2.5 transition-colors"
+            >
+              <div className="w-6 h-6 rounded-md bg-neutral-100 flex items-center justify-center"><KanbanSquare className="w-3.5 h-3.5 text-neutral-600" /></div>
+              Nova Tarefa
+            </button>
+            <button
+              onClick={() => {
+                if (onOpenCreateProjectModal) onOpenCreateProjectModal();
+                setOpenDropdown(null);
+                setIsMobileMenuOpen(false);
+              }}
+              className="w-full text-left px-4 py-2.5 text-sm hover:bg-neutral-50 text-neutral-700 flex items-center gap-2.5 transition-colors"
+            >
+              <div className="w-6 h-6 rounded-md bg-neutral-100 flex items-center justify-center"><FolderKanban className="w-3.5 h-3.5 text-neutral-600" /></div>
+              Novo Projeto
+            </button>
+            <button
+              onClick={() => {
+                handleCreateChat();
+                setOpenDropdown(null);
+              }}
+              className="w-full text-left px-4 py-2.5 text-sm hover:bg-neutral-50 text-neutral-700 flex items-center gap-2.5 transition-colors"
+            >
+              <div className="w-6 h-6 rounded-md bg-neutral-100 flex items-center justify-center"><MessageSquare className="w-3.5 h-3.5 text-neutral-600" /></div>
+              Nova Conversa
+            </button>
+
+              <>
+                <div className="h-px bg-neutral-100 my-1 mx-2" />
+                <div className="px-4 py-1.5 text-[10px] font-bold text-neutral-400 uppercase tracking-wider">No Projeto Ativo</div>
+                <button
+                  disabled={!isProjectContext}
+                  onClick={() => {
+                    if (onOpenCreateKanban) onOpenCreateKanban();
+                    setOpenDropdown(null);
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className={`w-full text-left px-4 py-2 text-sm flex items-center gap-2.5 transition-colors ${!isProjectContext ? 'opacity-50 cursor-not-allowed text-neutral-400' : 'hover:bg-neutral-50 text-neutral-700'}`}
+                >
+                  <div className={`w-6 h-6 rounded-md flex items-center justify-center ${!isProjectContext ? 'bg-neutral-50' : 'bg-neutral-100'}`}><KanbanSquare className={`w-3.5 h-3.5 ${!isProjectContext ? 'text-neutral-400' : 'text-neutral-600'}`} /></div>
+                  Novo Kanban
+                </button>
+                <button
+                  disabled={!isProjectContext}
+                  onClick={() => {
+                    if (onOpenCreateNote) onOpenCreateNote();
+                    setOpenDropdown(null);
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className={`w-full text-left px-4 py-2 text-sm flex items-center gap-2.5 transition-colors ${!isProjectContext ? 'opacity-50 cursor-not-allowed text-neutral-400' : 'hover:bg-neutral-50 text-neutral-700'}`}
+                >
+                  <div className={`w-6 h-6 rounded-md flex items-center justify-center ${!isProjectContext ? 'bg-neutral-50' : 'bg-neutral-100'}`}><FileText className={`w-3.5 h-3.5 ${!isProjectContext ? 'text-neutral-400' : 'text-neutral-600'}`} /></div>
+                  Nova Nota
+                </button>
+                <button
+                  disabled={!isProjectContext}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (!activeProjectId) return;
+                    const title = prompt('Nome do Checklist:');
+                    if (title) {
+                      checklistsApi.create(activeProjectId, { title }).then(() => {
+                        if (loadProjects) loadProjects(true);
+                      });
+                    }
+                    setOpenDropdown(null);
+                  }}
+                  className={`w-full text-left px-4 py-2 text-sm flex items-center gap-2.5 transition-colors ${!isProjectContext ? 'opacity-50 cursor-not-allowed text-neutral-400' : 'hover:bg-neutral-50 text-neutral-700'}`}
+                >
+                  <div className={`w-6 h-6 rounded-md flex items-center justify-center ${!isProjectContext ? 'bg-neutral-50' : 'bg-neutral-100'}`}><CheckSquare className={`w-3.5 h-3.5 ${!isProjectContext ? 'text-neutral-400' : 'text-neutral-600'}`} /></div>
+                  Novo Checklist
+                </button>
+                <button
+                  disabled={!isProjectContext}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (!activeProjectId) return;
+                    const title = prompt('Nome do Whiteboard:');
+                    if (title) {
+                      whiteboardsApi.create(activeProjectId, { title }).then(() => {
+                        if (loadProjects) loadProjects(true);
+                      });
+                    }
+                    setOpenDropdown(null);
+                  }}
+                  className={`w-full text-left px-4 py-2 text-sm flex items-center gap-2.5 transition-colors ${!isProjectContext ? 'opacity-50 cursor-not-allowed text-neutral-400' : 'hover:bg-neutral-50 text-neutral-700'}`}
+                >
+                  <div className={`w-6 h-6 rounded-md flex items-center justify-center ${!isProjectContext ? 'bg-neutral-50' : 'bg-neutral-100'}`}><PenTool className={`w-3.5 h-3.5 ${!isProjectContext ? 'text-neutral-400' : 'text-neutral-600'}`} /></div>
+                  Novo Whiteboard
+                </button>
+                <button
+                  disabled={!isProjectContext}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (!activeProjectId) return;
+                    const url = prompt('URL do Bookmark:');
+                    if (url) {
+                      const title = prompt('Título (opcional):') || url;
+                      import('../services/api').then(({ bookmarksApi }) => {
+                        bookmarksApi.create(activeProjectId, { title, url }).then(() => {
+                          if (loadProjects) loadProjects(true);
+                        });
+                      });
+                    }
+                    setOpenDropdown(null);
+                  }}
+                  className={`w-full text-left px-4 py-2 text-sm flex items-center gap-2.5 transition-colors ${!isProjectContext ? 'opacity-50 cursor-not-allowed text-neutral-400' : 'hover:bg-neutral-50 text-neutral-700'}`}
+                >
+                  <div className={`w-6 h-6 rounded-md flex items-center justify-center ${!isProjectContext ? 'bg-neutral-50' : 'bg-neutral-100'}`}><LinkIcon className={`w-3.5 h-3.5 ${!isProjectContext ? 'text-neutral-400' : 'text-neutral-600'}`} /></div>
+                  Novo Bookmark
+                </button>
+              </>
+          </div>
+        )}
         
-        <div className="flex justify-center items-center gap-1.5 pt-4">
-          <span
-            className={`w-2 h-2 rounded-full ${
-              isConnected ? 'bg-green-500' : 'bg-red-500'
-            }`}
-            title={isConnected ? 'Conectado' : 'Desconectado'}
-          />
-        </div>
+
       </div>
     </div>
   );
